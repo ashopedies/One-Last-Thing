@@ -27,35 +27,87 @@ function A.WeaponRows(out,map)
     end
     A.status.Weapons='TrainerSpells weapon data connected; learned/class/level/faction filtered'
 end
+local function flightMapNodes(map)
+    local seen,trace={},{}
+    local continentType=Enum and Enum.UIMapType and Enum.UIMapType.Continent or 2
+    local childNodes
+    while map and map~=0 and not seen[map] do
+        seen[map]=true
+        local info=A.Safe('flight map parent',C_Map and C_Map.GetMapInfo,map)
+        local shown=A.Safe('flight map coverage',C_TaxiMap.ShouldMapShowTaxiNodes,map)
+        -- ShouldMapShowTaxiNodes controls map rendering, not data availability.
+        -- Forever can return a continent's nodes for a zone where it is false.
+        local nodes=A.Safe('local flight nodes',C_TaxiMap.GetTaxiNodesForMap,map)
+        trace[#trace+1]=tostring(map)..':'..(type(nodes)=='table' and #nodes or '?')..'/'..tostring(shown)
+        if type(nodes)=='table' and next(nodes) then
+            if shown~=false or (info and info.mapType==continentType) then return map,nodes,table.concat(trace,', ') end
+            childNodes=nodes
+        end
+        if info and info.mapType==continentType and childNodes then return map,childNodes,table.concat(trace,', ') end
+        map=info and info.parentMapID
+    end
+    return nil,nil,table.concat(trace,', ')
+end
+local function projector(map,source)
+    if map==source then return function(x,y) return x,y end end
+    if C_Map and C_Map.GetMapRectOnMap then
+        -- Safe forwards three results, so wrap the four map bounds in a table.
+        local r=A.Safe('flight map bounds',function() return {C_Map.GetMapRectOnMap(map,source)} end)
+        if r and type(r[1])=='number' and type(r[2])=='number' and type(r[3])=='number'
+            and type(r[4])=='number' and r[2]>r[1] and r[4]>r[3] then
+            return function(x,y) return (x-r[1])/(r[2]-r[1]),(y-r[3])/(r[4]-r[3]) end
+        end
+    end
+    if C_Map and C_Map.GetWorldPosFromMapPos and C_Map.GetMapPosFromWorldPos and CreateVector2D then
+        return function(x,y)
+            local continent,world=A.Safe('flight world position',C_Map.GetWorldPosFromMapPos,source,CreateVector2D(x,y))
+            if not continent or not world then return end
+            local target,point=A.Safe('flight local position',C_Map.GetMapPosFromWorldPos,continent,world,map)
+            if target==map and point then return point:GetXY() end
+        end
+    end
+end
 function A.ObserveFlights()
     if not (C_TaxiMap and C_TaxiMap.GetAllTaxiNodes) then return end
-    local nodes=A.Safe('open flight map nodes',C_TaxiMap.GetAllTaxiNodes,A.Map()) or {}
+    local map=A.Safe('open flight map ID',GetTaxiMapID)
+    if not map then map=flightMapNodes(A.Map()) end
+    local nodes=map and A.Safe('open flight map nodes',C_TaxiMap.GetAllTaxiNodes,map) or {}
     local enum=Enum and Enum.FlightPathState
     local current=enum and enum.Current or 0
     local reachable=enum and enum.Reachable or 1
-    for _,node in ipairs(nodes) do
+    for _,node in ipairs(nodes or {}) do
         if node.nodeID and (node.state==current or node.state==reachable) then A.db.flightKnown[node.nodeID]=true end
     end
 end
 function A.FlightRows(out,map)
     if not (C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then A.status.Flights='Client flight-path map API unavailable';return end
-    local nodes=A.Safe('local flight nodes',C_TaxiMap.GetTaxiNodesForMap,map)
-    if type(nodes)~='table' then if A.CheckUnavailable then A.CheckUnavailable('Flight-path data unavailable') end;return end
-    local side=UnitFactionGroup('player')=='Horde' and 1 or 2
+    local source,nodes,trace=flightMapNodes(map)
+    A.status.Flights='Flight maps (map:nodes/display): '..(trace or 'none')
+    if not nodes then if A.CheckUnavailable then A.CheckUnavailable('Flight-path data unavailable') end;return end
+    local project=projector(map,source)
+    if not project then
+        A.status.Flights=A.status.Flights..'; cannot project '..tostring(source)..' onto '..tostring(map)
+        if A.CheckUnavailable then A.CheckUnavailable('Flight-path data unavailable') end
+        return
+    end
+    local factions=Enum and Enum.FlightPathFaction
+    local side=UnitFactionGroup('player')=='Horde' and (factions and factions.Horde or 1) or (factions and factions.Alliance or 2)
     for _,node in ipairs(nodes) do
         if node.nodeID and node.position and (node.faction==nil or node.faction==0 or node.faction==side) then
             local undiscovered=node.isUndiscovered
-            if undiscovered==false then A.db.flightKnown[node.nodeID]=true
-            elseif undiscovered==true then A.db.flightKnown[node.nodeID]=nil end
-            if undiscovered==true or not A.db.flightKnown[node.nodeID] then
-                local x,y=node.position:GetXY()
-                A.Add(out,{key='flight:'..node.nodeID,flight=true,flightID=node.nodeID,
-                    title=(undiscovered==true and 'Learn flight path: ' or 'Check flight path: ')..(node.name or 'Flight master'),
-                    detail=undiscovered==true and 'The game marks this flight path undiscovered. Speak to its flight master.'
-                        or 'Learned status is not reported. Open the flight map once to confirm.',
-                    map=map,x=x*100,y=y*100,priority=6,verify=undiscovered~=true})
+            -- Forever's map flag can claim unvisited routes are learned. Only
+            -- Current/Reachable observations at a flight master prove knowledge.
+            if not A.db.flightKnown[node.nodeID] then
+                local x,y=project(node.position:GetXY())
+                if x and y and x>=0 and x<=1 and y>=0 and y<=1 then
+                    A.Add(out,{key='flight:'..node.nodeID,flight=true,flightID=node.nodeID,
+                        title=(undiscovered==true and 'Learn flight path: ' or 'Check flight path: ')..(node.name or 'Flight master'),
+                        detail=undiscovered==true and 'The game marks this flight path undiscovered. Speak to its flight master.'
+                            or 'Learned status is not reported. Open the flight map once to confirm.',
+                        map=map,x=x*100,y=y*100,priority=6,verify=undiscovered~=true})
+                end
             end
         end
     end
-    A.status.Flights='Client flight nodes connected; learned paths hidden'
+    A.status.Flights='Client flight nodes connected; '..#nodes..' nodes on map '..tostring(source)..'; flight-master observations confirm learned paths'
 end

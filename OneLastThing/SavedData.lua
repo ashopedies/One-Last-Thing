@@ -17,6 +17,9 @@ function A.ValidateSavedData()
     if type(OneLastThingDB)~='table' then OneLastThingDB={} end
     local d=OneLastThingDB
     for _,key in ipairs({'sources','filters','filterExpanded','settingsSections','dismissed','snoozed','trash','supplies','vendors','trainers','flightKnown','supplyPrices','repairVendors','supplyOverrides','retiredClassSupplies','petFoodByDiet','vendorPoisons'}) do ensure(d,key) end
+    -- Older caches also trusted unreliable map flags. Reconfirm only this cache;
+    -- character preferences, ignored reminders and supply targets are preserved.
+    if d.flightKnowledgeVersion~=2 then d.flightKnown={};d.flightKnowledgeVersion=2 end
     for _,key in ipairs({'sources','filters','filterExpanded','settingsSections','dismissed'}) do stringMap(d[key],'boolean') end
     for k,v in pairs(d.snoozed) do if type(k)~='string' or not finite(v) then d.snoozed[k]=nil end end
     for k,v in pairs(d.trash) do

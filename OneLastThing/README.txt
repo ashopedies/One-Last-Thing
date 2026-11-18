@@ -1,16 +1,13 @@
-ONE LAST THING — 0.14.5
+ONE LAST THING — 0.14.7
 WoW Forever / interface 16001
 
 INSTALL
+Downloads: https://github.com/ashopedies/One-Last-Thing/releases
+Choose a release, expand Assets and download the -forever.zip install package.
 Extract the install ZIP into Interface/AddOns, allowing replacement when updating.
 The addon must be Interface/AddOns/OneLastThing/OneLastThing.toc.
 Restart WoW. /olt opens the checklist; /olt settings opens settings.
 /onelastthing is an alternate command.
-
-PREVIOUS PITSTOP INSTALLATIONS
-This ZIP contains only OneLastThing. After your character settings have been
-imported and saved, remove the old Interface/AddOns/PitStop folder manually.
-Keep OneLastThing's saved settings. Future ZIPs do not reinstall PitStop.
 
 DATA SOURCES
 Attune: quest chains. Questie / QuestieDB: quests, NPCs, vendors and repairs.
@@ -25,8 +22,8 @@ Drag the header to move; click to collapse. Escape leaves the main popup
 and OLT marker visible; use x to close it deliberately. Scroll with the mouse wheel.
 Filter beside the header manages categories and subcategories. Expand a
 category with + to show its children. Disabled groups can be restored there.
-Checkmarks no longer take up reminder-list lines; a small category label
-shares the title where space permits. Hover a reminder for full details.
+A small category label shares the title where space permits.
+Hover a reminder for full details.
 Resize the window by dragging its bottom corner. The - / + buttons change
 font size in 5% steps (80-130%), saved per character. Choose Default, Compact
 or Minimal rows in settings. Header placement, colors, font and opacity save
@@ -56,7 +53,7 @@ TrainerSpells data supplies friendly, rank-capable trainer locations.
 Important First Aid, Cooking and Fishing rank books can be bought ahead of
 their use requirements. Required/current skill and level are shown, with
 ownership/bank, learned-cap, affordability, stock and category checks retained.
-No ordinary recipe shopping was added. At most two book offers are shown.
+At most two key rank-book offers are shown.
 Dungeon, class, access and profession reminders include short purpose text;
 hover for full explanations, requirements and destination details.
 

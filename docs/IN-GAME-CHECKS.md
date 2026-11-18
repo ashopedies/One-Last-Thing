@@ -1,8 +1,12 @@
-# Live-client checks for 0.14.5
+# Live-client checks for 0.14.7
 
 New in 0.14.4: with Neav Express selected, confirm distance labels show ~ and the row menu shows ... without squares. Collapse a nonempty checklist and portal into a capital; it should expand. Collapse it again and walk into another district of that city; it should stay collapsed.
 
 New in 0.14.5: hide a nearby Expert profession book and confirm its generic cap warning does not replace it. Revisit after a timed hide expires. Move between class trainers and check the destination follows the nearest suitable trainer, including special spell sources. Reopen Settings and check the range, completion delay and repair sliders match saved values. Let an empty checklist fade, then hover/expand it and check the usual behaviour remains.
+
+New in 0.14.6: enter Rogmar or another settlement with an unlearned flight point while within the configured range. A Learn/Check flight path reminder should appear and its map action should point to the local master. Open a flight master map to confirm learned paths, then check the reminder and its pin disappear. Old flight knowledge is reconfirmed once; amounts, filters and ignored choices should remain intact. If it is still missing, capture /olt status before learning the route.
+
+New in 0.14.7: in Riverglades/Rogmar, verify flight reminders can appear before interacting with a flight master, even when the map-display flag is false. If the warning remains, send /olt status; it now includes queried map IDs, node counts and map-projection failures.
 
 Automated behavior checks pass against simulated Lua 5.1 APIs. The current Forever build, protected execution and live databases still require in-game verification.
 
