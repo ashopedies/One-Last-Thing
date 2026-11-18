@@ -1,14 +1,16 @@
 # One Last Thing
 
+**[Download One Last Thing](https://github.com/ashopedies/One-Last-Thing/releases)**
+
 A small, location-aware checklist for **WoW Forever**. Arrive somewhere and see useful things to do before leaving: unfinished quest-chain pickups, class and profession training, vendor supplies, flight paths and repairs.
 
 English and German clients are supported. Settings and supply amounts are saved **per character**. No purchases or training happen automatically. Automatic opening is suppressed inside instances and battlegrounds; `/olt` still works manually.
 
 ## Install
 
-Download **OneLastThing-VERSION-forever.zip** from this repository's Releases page. Extract it into your Forever client's `Interface/AddOns` folder. You should have `OneLastThing/OneLastThing.toc`, without an extra enclosing folder. Restart the game.
+Open [Releases](https://github.com/ashopedies/One-Last-Thing/releases), choose a version and expand **Assets**. Download **OneLastThing-VERSION-forever.zip**; the automatically generated Source code archives are for development.
 
-Install ZIPs contain only the `OneLastThing` folder. The retired PitStop settings-import addon is no longer included. If your settings have already been imported and saved, remove the old `Interface/AddOns/PitStop` folder; keep your OneLastThing saved settings.
+Extract the install ZIP into your Forever client's `Interface/AddOns` folder. You should have `Interface/AddOns/OneLastThing/OneLastThing.toc`, without an extra enclosing folder. Restart the game.
 
 For updates through WowUp, use the **GitHub repository URL**, rather than a direct ZIP download link. Enable automatic updates in your chosen client. Publishing a new tagged release supplies the next update; editing repository files alone does not.
 
