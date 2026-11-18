@@ -1,0 +1,12 @@
+/dist/
+/research/
+/upload/
+/.venv/
+__pycache__/
+*.py[cod]
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+/WTF/
+/SavedVariables/
