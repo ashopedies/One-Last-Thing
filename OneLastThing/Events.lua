@@ -91,7 +91,8 @@ events:SetScript('OnEvent',function(_,event,...)
         if A.InTransit() or A.AutomaticSuppressed() then
             if not A.manualInstance then A.ClearLocation(not A.AutomaticSuppressed()) end
         else
-            A.RequireScope()
+            local scope=A.RequireScope()
+            if scope and (not currentMap or scope.map~=currentMap) then A.ClearLocation(true) end
         end
         if ready then C_Timer.After(1,zone) end
     elseif event=='PLAYER_REGEN_ENABLED' then

@@ -158,6 +158,18 @@ def run():
         assert(A.frame:IsShown())
         for i=1,4 do timerStep() end
         assert(A.frame:IsShown() and A.scope.name=='Apothecarium')
+        -- Crossing to another map clears stale reminders immediately before settling.
+        local origGetMap=C_Map.GetBestMapForUnit
+        C_Map.GetBestMapForUnit=function() return 1411 end
+        GetMinimapZoneText=function() return 'Durotar' end
+        event(nil,'ZONE_CHANGED_NEW_AREA')
+        assert(not A.frame:IsShown())
+        for i=1,4 do timerStep() end
+        assert(A.frame:IsShown() and A.scope.map==1411)
+        C_Map.GetBestMapForUnit=origGetMap
+        GetMinimapZoneText=function() return 'Undercity' end
+        event(nil,'PLAYER_LEAVING_WORLD');event(nil,'PLAYER_ENTERING_WORLD')
+        for i=1,4 do timerStep() end
 
         -- Async item-load bursts coalesce Settings rebuilds rather than rebuilding synchronously.
         A.ShowSettings()
@@ -172,20 +184,23 @@ def run():
         assert(rebuilds==1)
         A.BuildSettings=origBuild
 
-        -- Navigation must not open an empty World Map when waypoints are unsupported or fail.
-        local opened,printed=0,nil
+        -- Navigation still opens the destination map when waypoint placement is unavailable or fails.
+        local opened,openedMap,printed=0,nil,nil
         local origPrint=A.Print;A.Print=function(msg) printed=msg end
         UiMapPoint={CreateFromCoordinates=function(m,x,y) return {map=m,x=x,y=y} end}
-        OpenWorldMap=function() opened=opened+1 end
+        OpenWorldMap=function(m) opened=opened+1;openedMap=m end
         C_Map.CanSetUserWaypointOnMap=function() return false end
         C_Map.SetUserWaypoint=function() error('should not place') end
         A.Navigate({key='n:1',title='No pin',detail='Fallback detail',map=1458,x=50,y=50})
-        assert(opened==0 and printed=='Fallback detail')
+        assert(opened==1 and openedMap==1458 and printed==nil)
         C_Map.CanSetUserWaypointOnMap=function() return true end
         C_Map.SetUserWaypoint=function() return false end
-        printed=nil
+        A.db.pin=nil
         A.Navigate({key='n:2',title='Rejected pin',detail='Pin rejected',map=1458,x=50,y=50})
-        assert(opened==0 and printed=='Pin rejected')
+        assert(opened==2 and openedMap==1458 and not A.db.pin and printed==nil)
+        OpenWorldMap=nil
+        A.Navigate({key='n:3',title='No map UI',detail='Print detail',map=1458,x=50,y=50})
+        assert(printed=='Print detail')
         A.Print=origPrint
 
         -- Nil-safe mouse-wheel forwarding across checklist, filter, settings and dropdown.

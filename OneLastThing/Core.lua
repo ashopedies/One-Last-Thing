@@ -320,17 +320,22 @@ function A.Navigate(row)
         -- Attune owns its own map view. The native waypoint below also works when
         -- its full-map setting is off, without modifying that setting.
     end
-    if native then
-        local ok,result=pcall(C_Map.SetUserWaypoint,UiMapPoint.CreateFromCoordinates(row.map,row.x/100,row.y/100))
-        if ok and result~=false then
-            if A.TrackWaypoint then A.TrackWaypoint(row,row.map,row.x/100,row.y/100) end
-            if C_SuperTrack then A.Safe('track waypoint', C_SuperTrack.SetSuperTrackedUserWaypoint,true) end
-            if OpenWorldMap then A.Safe('open world map', OpenWorldMap,row.map) end
-        else
-            if not ok then A.errors['set waypoint']=tostring(result) end
-            if not attuneOpened then A.Print(row.detail or row.title) end
+    local mapOpened=false
+    if row.map and row.x and row.y and C_Map and C_Map.SetUserWaypoint and UiMapPoint then
+        if native then
+            local ok,result=pcall(C_Map.SetUserWaypoint,UiMapPoint.CreateFromCoordinates(row.map,row.x/100,row.y/100))
+            if ok and result~=false then
+                if A.TrackWaypoint then A.TrackWaypoint(row,row.map,row.x/100,row.y/100) end
+                if C_SuperTrack then A.Safe('track waypoint', C_SuperTrack.SetSuperTrackedUserWaypoint,true) end
+            elseif not ok then
+                A.errors['set waypoint']=tostring(result)
+            end
         end
-    elseif not attuneOpened then
+        if OpenWorldMap then A.Safe('open world map', OpenWorldMap,row.map);mapOpened=true end
+    elseif row.map and OpenWorldMap then
+        A.Safe('open world map', OpenWorldMap,row.map);mapOpened=true
+    end
+    if not mapOpened and not attuneOpened then
         A.Print(row.detail or row.title)
     end
 end
