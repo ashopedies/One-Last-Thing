@@ -78,7 +78,7 @@ New to GitHub? Start with [GITHUB-START.md](docs/GITHUB-START.md). This project 
 ```sh
 python3 -m pip install -r requirements-dev.txt
 python3 tests/test_addon.py
-python3 tools/package.py --version 0.14.4
+python3 tools/package.py --version 0.14.5
 ```
 
 The install ZIP is written to `dist/`. It contains the addon and readable changelog. Tests simulate WoW APIs; they do not replace testing in the game. For a bug report, include client language, location, `/olt status`, reproduction steps and any BugSack error.

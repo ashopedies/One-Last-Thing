@@ -378,7 +378,8 @@ function A.ProfessionRows(out,map,travel)
     if not professions and A.CheckUnavailable then A.CheckUnavailable('SkillUp profession data unavailable') end
     A.status.SkillUp=professions and 'Ranks/books only; dynamic recipe shopping disabled' or ('Not ready: '..tostring(why))
     for _,p in ipairs(professions or {}) do
-        local hasBook=false;for _,r in ipairs(out) do if r.criticalBook and r.professionID==p.skillLineID then hasBook=true end end
+        local hasBook=A.coveredBooks and A.coveredBooks[p.skillLineID]
+        for _,r in ipairs(out) do if r.criticalBook and r.professionID==p.skillLineID then hasBook=true end end
         if not hasBook and p.rank and p.maxRank and p.maxRank>0 and p.maxRank<300 and p.rank>=p.maxRank-10 then
             A.Add(out,{key='cap:'..p.skillLineID,capMax=p.maxRank,professionID=p.skillLineID,profession=p.name,title=p.name..': '..p.rank..' / '..p.maxRank,
                 detail='Near the current rank cap. Check the next rank in SkillUp before travelling. This is a general warning, not proof of a local trainer.',priority=30})

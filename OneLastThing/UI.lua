@@ -124,17 +124,17 @@ local function make()
         C_Timer.After(0,function() self.wasDragged=false end)
     end)
     f.header:SetScript('OnEnter',function()
-        f.headerHovered=true;f.idleBadge=false;f.fadeElapsed=nil;f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
+        f.headerHovered=true;f.idleBadge=false;f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil);f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
         A.ApplyCollapsed()
     end)
     f.header:SetScript('OnLeave',function() f.headerHovered=false;A.StartCompletionIdle() end)
-    f.header:SetScript('OnUpdate',function(_,elapsed)
+    f.fadeUpdate=function(_,elapsed)
         if f.fadeElapsed then
             f.fadeElapsed=f.fadeElapsed+elapsed
             f.title:SetAlpha(math.max(0,1-f.fadeElapsed/.35))
-            if f.fadeElapsed>=.35 then f.fadeElapsed=nil;f.idleBadge=true;A.ApplyCollapsed() end
+            if f.fadeElapsed>=.35 then f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil);f.idleBadge=true;A.ApplyCollapsed() end
         end
-    end)
+    end
     f.sub=f:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');f.sub:SetPoint('TOPLEFT',14,-35);A.Font(f.sub,10,true);f.sub:SetJustifyH('LEFT')
     f.filterButton=button(f,'Filter',66,function() A.ShowFilters(f.filterButton) end)
     f.filterButton:SetPoint('TOPRIGHT',-37,-9);f.filterButton:SetFrameLevel(f.header:GetFrameLevel()+1)
@@ -155,7 +155,11 @@ local function make()
     hint(f.grip,'Drag to resize the window.')
     hint(check,'Refresh the checklist for your current location. Does not restore hidden reminders, purchase items or learn spells.')
     hint(restore,'Show reminders skipped this visit or hidden for 30 minutes. Ignored reminders and disabled categories stay hidden.')
-    f:SetScript('OnHide',function() A.pendingDraw=nil;if A.reminderMenu then A.reminderMenu:Hide() end;if A.filterMenu then A.filterMenu:Hide() end end)
+    f:SetScript('OnHide',function()
+        A.pendingDraw=nil;f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil)
+        f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
+        if A.reminderMenu then A.reminderMenu:Hide() end;if A.filterMenu then A.filterMenu:Hide() end
+    end)
     f.restoreButton=restore
     f.chrome={f.sub,f.close,f.filterButton,f.scroll,restore,check,settings,f.smaller,f.larger,f.grip}
     f:SetScript('OnSizeChanged',function(self,w,h)
@@ -197,7 +201,9 @@ function A.StartCompletionIdle()
     C_Timer.After(A.db.completionDelay or 10,function()
         if serial~=f.idleSerial then return end
         f.idleWaiting=false
-        if serial==f.idleSerial and A.db.collapsed and (f.rowCount or 0)==0 and not f.headerHovered then f.fadeElapsed=0 end
+        if serial==f.idleSerial and f:IsShown() and A.db.collapsed and (f.rowCount or 0)==0 and not f.headerHovered then
+            f.fadeElapsed=0;f.header:SetScript('OnUpdate',f.fadeUpdate)
+        end
     end)
 end
 function A.ApplyCollapsed()
@@ -212,6 +218,7 @@ function A.ApplyCollapsed()
     if not collapsed or not empty then
         f.idleBadge=false;f.fadeElapsed=nil;f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
     end
+    if f.fadeElapsed==nil then f.header:SetScript('OnUpdate',nil) end
     f.title:ClearAllPoints();f.title:SetPoint('TOPLEFT',14,-11)
     f.title:SetAlpha(f.idleBadge and .6 or 1)
     if collapsed then

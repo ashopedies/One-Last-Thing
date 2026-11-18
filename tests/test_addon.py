@@ -670,7 +670,7 @@ assert(OneLastThing.frame.title.text=='OLT',tostring(OneLastThing.frame.title.te
 OneLastThing.frame.header.scripts.OnEnter();assert(OneLastThing.frame.title.text=='One Last Thing · All done, yay!')
 OneLastThing.frame.header.scripts.OnLeave()
 OneLastThing.Draw({{key='pending',title='Pending'}},'Updated');OneLastThing.SetCollapsed(true,'manual');flushTimers()
-OneLastThing.frame.header.scripts.OnUpdate(OneLastThing.frame.header,10)
+assert(OneLastThing.frame.header.scripts.OnUpdate==nil)
 assert(OneLastThing.frame.title.text=='One Last Thing (1)')
 OneLastThing.db.headerPosition='top';OneLastThing.SetCollapsed(false,'manual')
 """)
@@ -2056,3 +2056,5 @@ from test_startup import run as run_startup_tests
 from test_stability import run as run_stability_tests
 run_startup_tests()
 run_stability_tests()
+from test_refinements import run as run_refinement_tests
+run_refinement_tests()

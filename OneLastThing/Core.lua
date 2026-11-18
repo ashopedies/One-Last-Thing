@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.4'
+A.version = '0.14.5'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
@@ -142,6 +142,10 @@ end
 function A.QuestReady(id)
     return not A.QuestDone(id) and A.QuestActive(id) and C_QuestLog and A.Safe('quest ready', C_QuestLog.IsComplete, id) == true
 end
+function A.ReminderHidden(row)
+    return A.db.trash[A.TrashKey(row)] or A.db.trash[row.key] or A.db.dismissed[row.key]
+        or (A.db.snoozed[row.key] or 0)>time()
+end
 function A.Add(out, row)
     if not row or not row.key then return end
     if A.captureProvider then
@@ -150,9 +154,8 @@ function A.Add(out, row)
         out[#out+1]=row;return
     end
     if A.Category then local cat,sub=A.Category(row);if not A.CategoryEnabled(cat,sub) then return end end
-    if A.db.trash[A.TrashKey(row)] or A.db.trash[row.key] then return end
+    if A.ReminderHidden(row) then return end
     if A.ScopeAllows and not A.ScopeAllows(row) then return end
-    if A.db.dismissed[row.key] or (A.db.snoozed[row.key] or 0) > time() then return end
     for _, old in ipairs(out) do
         if old.key == row.key then return end
     end
@@ -163,7 +166,7 @@ function A.Collect(map, travel, useCache)
     local out = {}
     if not A.db or not map then return out end
     if not useCache and A.InvalidateProviders then A.InvalidateProviders() end
-    A.providerHealth={};A.collectClassList=nil;A.collecting=true
+    A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.collecting=true
     if A.SyncClassSupplies then A.SyncClassSupplies() end
     for _, name in ipairs({'AttuneRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
         if A.RunProvider then A.RunProvider(name,out,map,travel,useCache)

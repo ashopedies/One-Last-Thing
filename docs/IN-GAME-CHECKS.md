@@ -1,6 +1,8 @@
-# Live-client checks for 0.14.4
+# Live-client checks for 0.14.5
 
 New in 0.14.4: with Neav Express selected, confirm distance labels show ~ and the row menu shows ... without squares. Collapse a nonempty checklist and portal into a capital; it should expand. Collapse it again and walk into another district of that city; it should stay collapsed.
+
+New in 0.14.5: hide a nearby Expert profession book and confirm its generic cap warning does not replace it. Revisit after a timed hide expires. Move between class trainers and check the destination follows the nearest suitable trainer, including special spell sources. Reopen Settings and check the range, completion delay and repair sliders match saved values. Let an empty checklist fade, then hover/expand it and check the usual behaviour remains.
 
 Automated behavior checks pass against simulated Lua 5.1 APIs. The current Forever build, protected execution and live databases still require in-game verification.
 

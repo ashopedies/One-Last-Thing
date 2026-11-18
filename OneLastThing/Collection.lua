@@ -18,6 +18,7 @@ function A.InvalidateForEvent(event)
       QUEST_LOG_UPDATE={'AttuneRows','TurnInRows'},QUEST_TURNED_IN={'AttuneRows','TurnInRows'},
       QUEST_DATA_LOAD_RESULT={'AttuneRows','TurnInRows'},
       SPELLS_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows'},
+      SKILL_LINES_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows'},
       TAXIMAP_OPENED={'FlightRows'},
       UPDATE_INVENTORY_DURABILITY={},MERCHANT_UPDATE={},MERCHANT_SHOW={},MERCHANT_CLOSED={},
       TRAINER_UPDATE={'ClassSpellRows','WeaponRows'},TRAINER_SHOW={'ClassSpellRows','WeaponRows'},
@@ -71,13 +72,17 @@ function A.RunProvider(name,out,map,travel,useCache)
     local fn=A[name]
     if type(fn)~='function' then A.providerHealth[name]='Check unavailable';return end
     local key=tostring(map)..':'..tostring(travel)..':'..tostring(UnitLevel('player'))
+    local classData,classTrainers
     if name=='ClassSpellRows' then
-        local s=A.scope or {}
-        key=key..':'..tostring(TrainerSpells_Data)..':'..tostring(TrainerSpellsBuiltin)..':'..math.floor((s.x or 0)*100)..':'..math.floor((s.y or 0)*100)
+        if A.ClassSpellData then classData,classTrainers=A.ClassSpellData() end
     elseif name=='AttuneRows' then key=key..':'..tostring(Attune_Data)..':'..tostring(A.db.attuneAllChains) end
     local cache=A.providerCache and A.providerCache[name]
-    if useCache and cached[name] and not warning and cache and cache.fn==fn and cache.key==key and time()-cache.when<60 then
-        for _,row in ipairs(cache.rows) do A.Add(out,row) end
+    if useCache and cached[name] and not warning and cache and cache.fn==fn and cache.key==key
+        and cache.data==classData and cache.trainers==classTrainers and time()-cache.when<60 then
+        for _,row in ipairs(cache.rows) do
+            if row.classSpell and A.PlaceClassSpell then row=A.PlaceClassSpell(row,map) end
+            if row then A.Add(out,row) end
+        end
         return
     end
     local raw={}
@@ -97,7 +102,7 @@ function A.RunProvider(name,out,map,travel,useCache)
     A.errors[name]=nil
     if warning then A.providerHealth[name]=warning end
     if useCache and cached[name] and not warning then
-        A.providerCache=A.providerCache or {};A.providerCache[name]={fn=fn,key=key,when=time(),rows=raw}
+        A.providerCache=A.providerCache or {};A.providerCache[name]={fn=fn,key=key,when=time(),rows=raw,data=classData,trainers=classTrainers}
     end
     for i=seeded+1,#raw do A.Add(out,raw[i]) end
 end

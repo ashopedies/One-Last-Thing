@@ -4,8 +4,8 @@ GitHub keeps your addon code, its change history and downloadable versions. Your
 
 The two packages serve different purposes:
 
-- **OneLastThing-0.14.4-forever.zip**: install this in WoW or share it directly.
-- **OneLastThing-0.14.4-source.zip**: use this to create your GitHub repository. It includes the addon, documentation, tests and release automation.
+- **OneLastThing-0.14.5-forever.zip**: install this in WoW or share it directly.
+- **OneLastThing-0.14.5-source.zip**: use this to create your GitHub repository. It includes the addon, documentation, tests and release automation.
 
 Both include **CHANGELOG.md**, an ordinary text file you can open without GitHub. GitHub also displays it as a readable page.
 
@@ -22,9 +22,9 @@ No game account files, SavedVariables, downloaded third-party addon databases or
 ## 2. Publish the first downloadable release
 
 1. Open your repository on GitHub. In the **Actions** tab, check that the checks workflow succeeds.
-2. Open **Releases > Draft a new release**. Create the tag **v0.14.4**, targeting your main branch, and use **One Last Thing 0.14.4** as its title.
-3. Copy the 0.14.4 notes from CHANGELOG.md into the description and publish the release.
-4. The tag starts the release workflow. Wait for it to succeed under **Actions**. It adds **OneLastThing-0.14.4-forever.zip** to the release assets. Until that asset appears, the install package is not ready.
+2. Open **Releases > Draft a new release**. Create the tag **v0.14.5**, targeting your main branch, and use **One Last Thing 0.14.5** as its title.
+3. Copy the 0.14.5 notes from CHANGELOG.md into the description and publish the release.
+4. The tag starts the release workflow. Wait for it to succeed under **Actions**. It adds **OneLastThing-0.14.5-forever.zip** to the release assets. Until that asset appears, the install package is not ready.
 5. If automation is disabled or fails, the already supplied install ZIP can be uploaded manually to that release. Keep the `-forever.zip` filename. GitHub's automatic “Source code” downloads are not the game installation ZIP.
 
 The workflow also supports running **Release > Run workflow** with the same tag to retry packaging. It tests before publishing the install asset.
@@ -52,7 +52,7 @@ With Python installed, run these from the repository folder:
 ```sh
 python3 -m pip install -r requirements-dev.txt
 python3 tests/test_addon.py
-python3 tools/package.py --version 0.14.4
+python3 tools/package.py --version 0.14.5
 ```
 
 Windows installations may use `py` instead of `python3`. The generated install ZIP appears in dist/. The checks simulate WoW APIs and cannot confirm the live client or third-party database coverage.

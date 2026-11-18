@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.5 — 2026-11-18
+
+- Kept skipped, snoozed and ignored nearby profession books from resurfacing as duplicate generic cap warnings. Coverage is recalculated per collection; general warnings remain available elsewhere, outside the vendor range, or when the book provider is disabled.
+- Reused eligible class-spell results while moving, refreshing the nearest suitable trainer and source-specific destinations separately. Cached templates do not mutate rows already on screen. Skill changes selectively invalidate weapon/class/progression caches while leaving unrelated flight results intact.
+- Pruned higher-level spells before building training candidates or inspecting their prerequisites. Already learned higher ranks still suppress obsolete lower ranks when Forever's level requirements differ from the catalogue. Class/trainer table replacements invalidate cached results; events, manual checks and the existing 60-second expiry cover in-place changes.
+- Synchronized range, completion-delay and repair sliders on the settings fast-path. Closed dropdowns before selection-triggered rebuilds, reused pooled button style handlers/backdrops, and retained font and hover-state updates.
+- Attached the header's fade OnUpdate handler only while fading, clearing it on completion, hover, expansion and hiding. Kept styling, supply-zero semantics, map-opening behaviour and saved settings unchanged.
+- Added isolated Lua 5.1 regression coverage for the above changes, including book-hide lifetimes, trainer relocation, future-spell pruning, higher ranks, cache expiry, settings pooling and fade cleanup.
+
 ## 0.14.4 — 2026-11-17
 
 - Replaced the distance approximation glyph with ASCII ~ and the row overflow glyph with three ordinary periods (...), avoiding missing-symbol squares in Neav Express. Expanded section controls use an ordinary hyphen; the ignored-reminders help uses >. German letters and localization are preserved.

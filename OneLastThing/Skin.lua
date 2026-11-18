@@ -119,7 +119,9 @@ function A.Panel(frame)
     A.Background(frame,0,0,0,1)
 end
 function A.StyleButton(b)
-    A.Panel(b);A.Background(b,.09,.09,.10,1);A.Font(b:GetFontString(),11)
+    A.Background(b,.09,.09,.10,1);A.Font(b:GetFontString(),11)
+    if b.oltStyled then return end
+    b.oltStyled=true;A.Panel(b);A.Background(b,.09,.09,.10,1)
     b:SetScript('OnEnter',function(self) A.Background(self,.18,.18,.20,1) end)
     b:SetScript('OnLeave',function(self) A.Background(self,.09,.09,.10,1) end)
     b:SetScript('OnMouseDown',function(self) A.Background(self,.04,.04,.05,1) end)

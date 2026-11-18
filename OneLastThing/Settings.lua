@@ -109,6 +109,9 @@ local function buildSettings()
         for id,status in pairs(f.supplyStatuses or {}) do A.SetText(status,A.SupplySettingsText(id,A.db.supplies[id] and A.db.supplies[id].target or 0)) end
         if f.hunterAmmoStatus then local id=A.HunterAmmoSelection();A.SetText(f.hunterAmmoStatus,A.HunterAmmoStatus()..(id and (' · '..A.SupplyEstimateText(id,A.HunterAmmoTarget())) or '')) end
         f.opacity:SetValue(A.db.opacity*100);f.fontSize:SetValue(A.db.fontScale*100);f.scale:SetValue(A.db.scale*100);f.bags:SetValue(A.db.bagSlots)
+        if f.range then f.range:SetValue(A.db.nearbyRadius) end
+        if f.fadeDelay then f.fadeDelay:SetValue(A.db.completionDelay) end
+        if f.repairs then f.repairs:SetValue(A.db.repairThreshold) end
         A.LayoutSettingsSections();return
     end
     f.signature=signature;f.rebuilding=true
@@ -198,7 +201,7 @@ local function buildSettings()
             for i,c in ipairs(current) do
                 local choice=c
                 local item=menu.items[i] or button(menu.content,choice[2],0,-(i-1)*26,202,function() end);menu.items[i]=item
-                item:Show();A.SetText(item,choice[2]);item:SetScript('OnClick',function() A.db[key]=choice[1];A.SetText(b,choice[2]..'  v');if key=='theme' then A.ApplyTheme() elseif key=='headerPosition' then A.ApplyCollapsed() elseif key=='rowMode' then A.Refresh('Updated',false) elseif key=='petFoodID' then A.SelectVendorPetFood(choice[1]);f.signature=nil;A.BuildSettings() else A.ApplyFonts() end;menu:Hide() end)
+                item:Show();A.SetText(item,choice[2]);item:SetScript('OnClick',function() menu:Hide();A.db[key]=choice[1];A.SetText(b,choice[2]..'  v');if key=='theme' then A.ApplyTheme() elseif key=='headerPosition' then A.ApplyCollapsed() elseif key=='rowMode' then A.Refresh('Updated',false) elseif key=='petFoodID' then A.SelectVendorPetFood(choice[1]);f.signature=nil;A.BuildSettings() else A.ApplyFonts() end end)
             end
             menu.anchor=b;menu:Show();menu.scroll:SetVerticalScroll(0);A.UpdateScroll(menu.scroll)
         end))

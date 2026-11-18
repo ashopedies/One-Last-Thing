@@ -40,6 +40,7 @@ function A.ObserveImportantMerchant()
     end
 end
 function A.ImportantVendorRows(out,map)
+    A.coveredBooks={}
     if A.db.importantVendorBuys==false then return end
     local ps=plans();if not ps then if A.CheckUnavailable then A.CheckUnavailable('SkillUp profession data unavailable') end;return end
     local money=A.Safe('purchase budget',GetMoney);if type(money)~='number' then return end
@@ -72,6 +73,8 @@ function A.ImportantVendorRows(out,map)
     end)
     local added=0
     for _,row in ipairs(candidates) do
+        if A.ReminderHidden(row) and A.CategoryEnabled('professions',tostring(row.professionID))
+            and A.ScopeAllows(row) then A.coveredBooks[row.professionID]=true end
         local before=#out;A.Add(out,row)
         if #out>before then added=added+1;if added==2 then break end end
     end
