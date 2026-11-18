@@ -1,0 +1,32 @@
+## Interface: 16001
+## Title: One Last Thing
+## Notes: Location-aware reminders for costly return trips. Attune and SkillUp Forever integration.
+## Author: Custom
+## Version: 0.14.4
+## OptionalDeps: Attune, Questie, QuestieDB, SkillUpForever, NeavMedia, TrainerSpells, LibSharedMedia-3.0, SharedMedia, SharedMedia_MyMedia
+## SavedVariablesPerCharacter: OneLastThingDB
+Locale.lua
+Migration.lua
+SavedData.lua
+Core.lua
+Collection.lua
+Money.lua
+ClassSupplies.lua
+HunterAmmo.lua
+VendorClassItems.lua
+Scope.lua
+Order.lua
+Categories.lua
+Providers.lua
+ClassTraining.lua
+ImportantBuys.lua
+TravelTraining.lua
+Repairs.lua
+Skin.lua
+Scroll.lua
+Pins.lua
+UI.lua
+Filters.lua
+Settings.lua
+TrashBin.lua
+Events.lua
