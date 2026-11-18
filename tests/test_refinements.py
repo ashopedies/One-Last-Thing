@@ -143,6 +143,134 @@ def run():
     ''')
     print('PASS: header OnUpdate exists only during fade and clears on completion, hover, expansion and hide')
 
+    vm = fresh_client(locale='deDE')
+    vm.execute('''
+        local A=OneLastThing
+        -- Subzone and indoor transitions keep a visible checklist steady without flicker.
+        local origCollect=A.Collect
+        A.Collect=function() return {{key='test:steady',title='Task',map=1458,x=50,y=50}} end
+        A.Refresh('Manual check',true,true)
+        assert(A.frame:IsShown())
+        GetMinimapZoneText=function() return 'Apothecarium' end
+        event(nil,'ZONE_CHANGED')
+        assert(A.frame:IsShown())
+        event(nil,'ZONE_CHANGED_INDOORS')
+        assert(A.frame:IsShown())
+        for i=1,4 do timerStep() end
+        assert(A.frame:IsShown() and A.scope.name=='Apothecarium')
+
+        -- Async item-load bursts coalesce Settings rebuilds rather than rebuilding synchronously.
+        A.ShowSettings()
+        local rebuilds=0
+        local origBuild=A.BuildSettings
+        A.BuildSettings=function() rebuilds=rebuilds+1;return origBuild() end
+        A.db.supplies={[17030]={target=3,minLevel=30}}
+        event(nil,'GET_ITEM_INFO_RECEIVED',17030)
+        event(nil,'ITEM_DATA_LOAD_RESULT',17030)
+        assert(rebuilds==0)
+        timerStep()
+        assert(rebuilds==1)
+        A.BuildSettings=origBuild
+
+        -- Navigation must not open an empty World Map when waypoints are unsupported or fail.
+        local opened,printed=0,nil
+        local origPrint=A.Print;A.Print=function(msg) printed=msg end
+        UiMapPoint={CreateFromCoordinates=function(m,x,y) return {map=m,x=x,y=y} end}
+        OpenWorldMap=function() opened=opened+1 end
+        C_Map.CanSetUserWaypointOnMap=function() return false end
+        C_Map.SetUserWaypoint=function() error('should not place') end
+        A.Navigate({key='n:1',title='No pin',detail='Fallback detail',map=1458,x=50,y=50})
+        assert(opened==0 and printed=='Fallback detail')
+        C_Map.CanSetUserWaypointOnMap=function() return true end
+        C_Map.SetUserWaypoint=function() return false end
+        printed=nil
+        A.Navigate({key='n:2',title='Rejected pin',detail='Pin rejected',map=1458,x=50,y=50})
+        assert(opened==0 and printed=='Pin rejected')
+        A.Print=origPrint
+
+        -- Nil-safe mouse-wheel forwarding across checklist, filter, settings and dropdown.
+        A.db.collapsed=false
+        local origWheel=A.frame.scroll:GetScript('OnMouseWheel')
+        A.frame.scroll:SetScript('OnMouseWheel',nil)
+        A.frame:GetScript('OnMouseWheel')(A.frame,-1)
+        A.frame.scroll:SetScript('OnMouseWheel',origWheel)
+        A.ShowFilters(A.frame.filterButton)
+        local origFilterWheel=A.filterMenu.scroll:GetScript('OnMouseWheel')
+        A.filterMenu.scroll:SetScript('OnMouseWheel',nil)
+        A.filterMenu:GetScript('OnMouseWheel')(A.filterMenu,-1)
+        A.filterMenu.scroll:SetScript('OnMouseWheel',origFilterWheel)
+        A.CloseFilters()
+        local origSettingsWheel=A.settings.scroll:GetScript('OnMouseWheel')
+        A.settings.scroll:SetScript('OnMouseWheel',nil)
+        A.settings:GetScript('OnMouseWheel')(A.settings,-1)
+        A.settings.scroll:SetScript('OnMouseWheel',origSettingsWheel)
+
+        -- Shared world-coordinate conversions across Nearby and SortReminders during Collect.
+        local oldWorld,oldVec=C_Map.GetWorldPosFromMapPos,CreateVector2D
+        CreateVector2D=function(x,y) return {x=x,y=y} end
+        local conversions=0
+        C_Map.GetWorldPosFromMapPos=function(m,p) conversions=conversions+1;return 1,{GetXY=function() return p.x*10000,p.y*10000 end} end
+        A.scope={map=1413,x=.5,y=.5,key='1413:Ratchet'}
+        A.db.nearbyOnly=true;A.db.nearbyRadius=850
+        A.Collect=origCollect
+        local origTurnIn=A.TurnInRows
+        A.TurnInRows=function(out,map)
+            A.Add(out,{key='q:1:end',quest=1,title='Turn in: One',map=1413,x=52,y=50})
+            A.Add(out,{key='q:2:end',quest=2,title='Turn in: Two',map=1413,x=52,y=50})
+        end
+        local savedFilters=A.db.filters;A.db.filters={}
+        for _,name in ipairs({'AttuneRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
+            A.db.sources[name]=false
+        end
+        A.db.sources.TurnInRows=nil
+        A.Collect(1413,false)
+        assert(conversions==2 and A.worldCoordCache==nil)
+        A.TurnInRows=origTurnIn;A.db.filters=savedFilters;A.db.sources={}
+        C_Map.GetWorldPosFromMapPos=oldWorld;CreateVector2D=oldVec
+
+        -- TrashBin skips scanning TrainerSpells_Data when no trashed spell needs rank checks.
+        local trainerScans=0
+        TrainerSpells_Data={SHAMAN={[1]={[101]={rank=1}}}}
+        local origKnown=A.SpellKnown
+        A.SpellKnown=function(id) trainerScans=trainerScans+1;return origKnown(id) end
+        A.db.trash={['quest:999']=true}
+        A.TrashEntries()
+        assert(trainerScans==0)
+        A.SpellKnown=origKnown;TrainerSpells_Data=nil
+
+        -- German localization parity checks.
+        assert(A.FormatMoney(nil)=='Preis unbekannt')
+        assert(A.Translate('Observed training')=='Erfasste Ausbildung')
+        assert(A.Translate('Map 1454')=='Karte 1454')
+        assert(A.Translate('Grey prerequisite — unlocks spell 123 via this chain')=='Graue Vorquest – schaltet Zauber 123 über diese Questreihe frei')
+        assert(A.Translate('Grey prerequisite — raid/access chain: raid access')=='Graue Vorquest – Schlachtzug/Zugang: Schlachtzugzugang')
+        assert(A.Translate('Version 0.14.5; map 1454')=='Version 0.14.5; Karte 1454')
+        assert(A.Translate('Compatibility issue [test]: err')=='Kompatibilitätsproblem [test]: err')
+        assert(A.Translate('Automatic popups: true')=='Automatische Hinweise: ein')
+        assert(A.Translate('Automatic popups: false')=='Automatische Hinweise: aus')
+        assert(A.Translate('/olt - check | /olt settings | /olt supply ITEM_ID TARGET | /olt restore | /olt auto | /olt status'):find('prüfen',1,true))
+        assert(A.Translate('Learned status is not reported. Open the flight map once to confirm.')=='Flugpunktstatus nicht gemeldet. Öffne zur Bestätigung einmal die Flugkarte.')
+        local origLocName=A.LocationName;A.LocationName=function() return nil end
+        A.Draw({},'Updated')
+        assert(A.frame.sub:GetText():find('Unbekannter Ort',1,true))
+        A.LocationName=origLocName
+        local p={skillLineID=171,name='Alchemie',rank=60,maxRank=75,steps={{kind='train',detail='Orgrimmar'}}}
+        SkillUpForever={API={version=1,Professions=function() return {p} end}}
+        C_Map.GetMapInfo=function() return {name='Orgrimmar'} end
+        local profRows={};A.ProfessionRows(profRows,1454)
+        assert(#profRows==1 and profRows[1].title=='Alchemie: Nächste Berufsstufe lernen')
+        A.settings.signature=nil;A.BuildSettings()
+        local bagIdx,flightIdx,repairIdx
+        for i,c in ipairs(A.settings.controls) do
+            if c.kind=='CheckButton' and c.label then
+                local txt=c.label:GetText()
+                if txt=='Taschenplatz' then bagIdx=i elseif txt=='Flugpunkte' then flightIdx=i elseif txt=='Reparaturen' then repairIdx=i end
+            end
+        end
+        assert(flightIdx and repairIdx and bagIdx and flightIdx<repairIdx and repairIdx<bagIdx)
+    ''')
+    print('PASS: subzone flicker prevention, item-load coalescing, navigation/wheel guards, shared coords, trash scan skip and German localization parity')
+
 
 if __name__ == '__main__':
     run()

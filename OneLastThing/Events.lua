@@ -1,7 +1,7 @@
 local _, A = ...
 local events=CreateFrame('Frame');A.eventFrame=events
 local queued=false
-local merchantDirty,trainerDirty
+local merchantDirty,trainerDirty,settingsDirty
 local ready=false
 local function schedule(reason,show)
     if show or not A.scheduledShow then A.scheduledReason=reason end
@@ -15,6 +15,10 @@ local function schedule(reason,show)
             A.Safe('observe merchant',A.ObserveMerchant);A.Safe('observe repair vendor',A.ObserveRepairMerchant);A.Safe('important vendor offers',A.ObserveImportantMerchant)
         end
         if trainerDirty then trainerDirty=nil;A.Safe('observe trainer',A.ObserveTrainer) end
+        if settingsDirty then
+            settingsDirty=nil
+            if A.settings and A.settings:IsShown() then A.BuildSettings() end
+        end
         local r,s=A.scheduledReason,A.scheduledShow
         A.scheduledReason,A.scheduledShow=nil,nil
         A.Safe('refresh',A.Refresh,r,s)
@@ -79,8 +83,16 @@ events:SetScript('OnEvent',function(_,event,...)
     elseif event=='PLAYER_LEAVING_WORLD' then
         A.loadingWorld=true;A.manualInstance=nil;pendingLocation=nil;currentLocation=nil;currentMap=nil;A.capitalArrivalMap=nil
         A.ClearLocation()
-    elseif event=='ZONE_CHANGED_NEW_AREA' or event=='ZONE_CHANGED' or event=='ZONE_CHANGED_INDOORS' or event=='PLAYER_ENTERING_WORLD' or event=='PLAYER_CONTROL_GAINED' then
+    elseif event=='PLAYER_ENTERING_WORLD' or event=='PLAYER_CONTROL_GAINED' then
         A.loadingWorld=nil;A.manualInstance=nil;A.ClearLocation(true)
+        if ready then C_Timer.After(1,zone) end
+    elseif event=='ZONE_CHANGED_NEW_AREA' or event=='ZONE_CHANGED' or event=='ZONE_CHANGED_INDOORS' then
+        A.loadingWorld=nil;A.manualInstance=nil
+        if A.InTransit() or A.AutomaticSuppressed() then
+            if not A.manualInstance then A.ClearLocation(not A.AutomaticSuppressed()) end
+        else
+            A.RequireScope()
+        end
         if ready then C_Timer.After(1,zone) end
     elseif event=='PLAYER_REGEN_ENABLED' then
         if A.pending then local p=A.pending;A.pending=nil;if p.manual then A.Safe('manual refresh',A.Refresh,p.reason,p.show,true) else schedule(p.reason,p.show) end end
@@ -102,7 +114,7 @@ events:SetScript('OnEvent',function(_,event,...)
         local id=...
         local selected=A.IsHunter() and A.HunterAmmoSelection()
         if A.db.supplies[id] or selected==id or (A.IsCriticalBook and A.IsCriticalBook(id)) then
-            if A.settings then A.settings.signature=nil;if A.settings:IsShown() then A.BuildSettings() end end
+            if A.settings then A.settings.signature=nil;if A.settings:IsShown() then settingsDirty=true end end
             schedule('Updated',false)
         end
     elseif event=='QUEST_DATA_LOAD_RESULT' then

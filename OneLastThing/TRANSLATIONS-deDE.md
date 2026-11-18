@@ -5,6 +5,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 
 | English | Deutsch |
 | --- | --- |
+| /olt - check \| /olt settings \| /olt supply ITEM_ID TARGET \| /olt restore \| /olt auto \| /olt status | /olt – prüfen \| /olt settings \| /olt supply GEGENSTANDS_ID SOLLBESTAND \| /olt restore \| /olt auto \| /olt status |
 | /olt status — connection diagnostics | /olt status – Verbindungen prüfen |
 | /olt status — data and compatibility diagnostics | /olt status – Daten und Kompatibilität prüfen |
 | Add | Hinzufügen |
@@ -92,11 +93,11 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Important profession rank books (maximum 2) | Wichtige Bücher für Berufsstufen (höchstens 2) |
 | Increase font size | Schrift vergrößern |
 | Learned or completed items stay out of the checklist. | Gelerntes und Erledigtes bleibt aus der Liste ausgeblendet. |
-| Learned status is not reported. Open the flight map once to confirm. | Der bekannte Status ist nicht verfügbar. Öffne zur Bestätigung einmal die Flugkarte. |
+| Learned status is not reported. Open the flight map once to confirm. | Flugpunktstatus nicht gemeldet. Öffne zur Bestätigung einmal die Flugkarte. |
 | Leatherworking | Lederverarbeitung |
 | Loaded | Geladen |
 | Local reminders | Hinweise in der Nähe |
-| Manage in Settings → Ignored reminders | Verwalten: Einstellungen → Ignorierte Hinweise |
+| Manage in Settings > Ignored reminders | Verwalten: Einstellungen > Ignorierte Hinweise |
 | Managed in Custom supplies | Unter „Zusätzliche Gegenstände“ verwaltet |
 | Map | Karte |
 | Merchant | Händler |
@@ -105,7 +106,6 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Missing data providers are reported in the checklist. | Fehlende Datenquellen werden in der Liste angezeigt. |
 | More options, including Don’t remind again. | Weitere Optionen, darunter „Nicht mehr erinnern“. |
 | Near the current rank cap. Check the next rank in SkillUp before travelling. This is a general warning, not proof of a local trainer. | Die aktuelle Berufsstufe ist fast ausgeschöpft. Prüfe vor der Reise die nächste Stufe in SkillUp. Ein Lehrer in der Nähe ist damit nicht bestätigt. |
-| Nearby range (yards) | Umkreis (Meter) |
 | Needed for class-spell and weapon-training catalogues. | Für Daten zu Klassenfähigkeiten und Waffenlehrern. |
 | Needed for full NPC, vendor and quest location data. | Für Positionen von NPCs, Händlern und Quests. |
 | Needed for full quest eligibility and zone conversion. | Für Questvoraussetzungen und die Zuordnung von Gebieten. |
@@ -121,6 +121,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Not loaded | Nicht geladen |
 | Observed by you | Von dir erfasst |
 | Observed trainer spells | Beim Lehrer erfasste Fähigkeiten |
+| Observed training | Erfasste Ausbildung |
 | One Last Thing settings | One Last Thing-Einstellungen |
 | One Last Thing works without mandatory addon dependencies. | One Last Thing hat keine zwingend benötigten Zusatz-Addons. |
 | One Last Thing · All done, yay! | One Last Thing · Alles erledigt, juhu! |
@@ -224,6 +225,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Weapon master | Waffenmeister |
 | Weapon skills | Waffenfertigkeiten |
 | [Check] | [Prüfen] |
+| price unknown | Preis unbekannt |
 | raid access | Schlachtzugzugang |
 | this chain | diese Questreihe |
 | total | insgesamt |

@@ -1,7 +1,7 @@
 local _,A=...
 function A.FormatMoney(copper)
     local n=tonumber(copper)
-    if not n then return 'price unknown' end
+    if not n then return A.Translate('price unknown') end
     n=math.max(0,math.floor(n+.5))
     local g=math.floor(n/10000);local s=math.floor(n/100)%100;local c=n%100
     return (g>0 and (g..'g') or '')..(s>0 and (s..'s') or '')..((c>0 or n==0) and (c..'c') or '')

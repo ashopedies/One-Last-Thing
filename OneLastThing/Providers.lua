@@ -412,7 +412,7 @@ function A.ProfessionRows(out,map,travel)
                 local questAllowed=not step.questID or finish or eligible(step.questID)~=false
                 if questAllowed and (m or textMatch) then
                     A.Add(out,{key='rank:'..p.skillLineID..':'..(step.questID or p.maxRank or i),
-                        title=p.name..': '..(finish and A.Translate('Turn in rank quest') or (step.text or 'Train next profession rank')),
+                        title=p.name..': '..(finish and A.Translate('Turn in rank quest') or (step.text or A.Translate('Train next profession rank'))),
                         detail=detail..'\nProfession rank'..(textMatch and not m and ' (zone matched from route text)' or ''),
                         map=m,x=x,y=y,quest=step.questID,finish=finish,skill=p.skillLineID,professionID=p.skillLineID,profession=p.name,professionRank=true,capMax=p.maxRank,cost=step.cost,stepIndex=i,priority=12,verify=true,why='Profession rank progression: '..p.name})
                 end

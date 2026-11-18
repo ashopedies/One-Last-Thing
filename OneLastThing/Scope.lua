@@ -36,8 +36,20 @@ function A.LocationName()
 end
 local function world(map,x,y)
     if not (C_Map and C_Map.GetWorldPosFromMapPos and CreateVector2D) then return end
+    local cache=A.collecting and A.worldCoordCache
+    local key=cache and (tostring(map)..':'..tostring(x)..':'..tostring(y))
+    if key and cache[key]~=nil then
+        local c=cache[key]
+        if c then return c[1],c[2],c[3] end
+        return
+    end
     local continent,p=A.Safe('local world position',C_Map.GetWorldPosFromMapPos,map,CreateVector2D(x,y))
-    if p then local wx,wy=p:GetXY();return continent,wx,wy end
+    if p then
+        local wx,wy=p:GetXY()
+        if key then cache[key]={continent,wx,wy} end
+        return continent,wx,wy
+    end
+    if key then cache[key]=false end
 end
 function A.Nearby(map,x,y)
     local scope=A.scope

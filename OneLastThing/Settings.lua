@@ -83,8 +83,8 @@ function A.ShowSettings()
     f.scroll=acquire('ScrollFrame',nil,f);f.scroll:SetPoint('TOPLEFT',10,-48);f.scroll:SetPoint('BOTTOMRIGHT',-10,18)
     f.content=acquire('Frame',nil,f.scroll);f.content:SetSize(410,1);A.AttachScrolling(f.scroll,f.content)
     local scrollWheel=f.scroll:GetScript('OnMouseWheel')
-    f.scroll:SetScript('OnMouseWheel',function(self,delta) if f.menu then f.menu:Hide() end;scrollWheel(self,delta) end)
-    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) if f.menu then f.menu:Hide() end;f.scroll:GetScript('OnMouseWheel')(f.scroll,delta) end)
+    f.scroll:SetScript('OnMouseWheel',function(self,delta) if f.menu then f.menu:Hide() end;if scrollWheel then scrollWheel(self,delta) end end)
+    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) if f.menu then f.menu:Hide() end;local wheel=f.scroll:GetScript('OnMouseWheel');if wheel then wheel(f.scroll,delta) end end)
     f.controls={};f.pool={};f.boxes={}
     table.insert(UISpecialFrames,'OneLastThingSettings');A.BuildSettings();f:Show()
 end
@@ -194,7 +194,7 @@ local function buildSettings()
                 table.insert(UISpecialFrames,'OneLastThingSettingsDropdown')
                 menu.scroll=acquire('ScrollFrame',nil,menu);menu.scroll:SetPoint('TOPLEFT',5,-5);menu.scroll:SetPoint('BOTTOMRIGHT',-5,5)
                 menu.content=acquire('Frame',nil,menu.scroll);menu.content:SetSize(202,1);A.AttachScrolling(menu.scroll,menu.content)
-                menu:EnableMouseWheel(true);menu:SetScript('OnMouseWheel',function(_,delta) menu.scroll:GetScript('OnMouseWheel')(menu.scroll,delta) end)
+                menu:EnableMouseWheel(true);menu:SetScript('OnMouseWheel',function(_,delta) local wheel=menu.scroll:GetScript('OnMouseWheel');if wheel then wheel(menu.scroll,delta) end end)
             end
             menu.content:SetHeight(#current*26)
             for _,item in ipairs(menu.items) do item:Hide() end
@@ -336,7 +336,7 @@ local function buildSettings()
         local categoryBox=control(cat.name,function() return A.CategoryEnabled(cat.id) end,function(v) A.SetCategory(cat.id,nil,v) end)
         A.Tint(categoryBox.label,cat.id)
         local keys={};for sub in pairs(cat.subs) do keys[#keys+1]=sub end
-        table.sort(keys,function(a,b) return cat.subs[a]<cat.subs[b] end)
+        table.sort(keys,function(a,b) return A.Translate(cat.subs[a])<A.Translate(cat.subs[b]) end)
         for _,sub in ipairs(cat.id~='supplies' and keys or {}) do
             -- Child checkbox stores its own choice, independent of the parent.
             local childBox=control(cat.subs[sub],function() return A.db.filters[cat.id..'/'..sub]~=false end,

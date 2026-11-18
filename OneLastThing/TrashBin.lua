@@ -64,10 +64,19 @@ local function isLearned(r,ranks)
     return info and info.learned==true
 end
 function A.TrashEntries()
-    local entries={};local skills,certain=professions();local ranks=knownClassRanks()
+    local entries={};local records={};local needRanks=false
     for key,value in pairs(A.db.trash) do
         if value then
-            local r=record(key,value);local score,reason=500,'Other hidden reminder'
+            local r=record(key,value)
+            records[#records+1]={key=key,record=r}
+            if r.spell and r.spellName and r.rank then needRanks=true end
+        end
+    end
+    local skills,certain=professions();local ranks=needRanks and knownClassRanks() or {}
+    for _,item in ipairs(records) do
+        local key,r=item.key,item.record
+        if r then
+            local score,reason=500,'Other hidden reminder'
             local gray=r.quest and A.IsGrayQuest(r.quest)
             if gray==nil and r.questLevel and r.questLevel>0 and C_QuestLog and C_QuestLog.GetTrivialRange then
                 local range=A.Safe('trash gray range',C_QuestLog.GetTrivialRange)

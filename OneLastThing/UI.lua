@@ -142,7 +142,7 @@ local function make()
     f.close=button(f,'x',23,function() A.scopeRecovery=nil;f:Hide() end);f.close:SetPoint('TOPRIGHT',-9,-9);f.filterButton:SetPoint('TOPRIGHT',-37,-9)
     f.scroll=CreateFrame('ScrollFrame',nil,f);f.scroll:SetPoint('TOPLEFT',12,-53);f.scroll:SetPoint('BOTTOMRIGHT',-12,45)
     f.content=CreateFrame('Frame',nil,f.scroll);f.content:SetSize(408,1);A.AttachScrolling(f.scroll,f.content);f.widgets={}
-    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) if not A.db.collapsed then f.scroll:GetScript('OnMouseWheel')(f.scroll,delta) end end)
+    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) local wheel=not A.db.collapsed and f.scroll:GetScript('OnMouseWheel');if wheel then wheel(f.scroll,delta) end end)
     local restore=button(f,'Show hidden reminders',145,function() A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',true) end);restore:SetPoint('BOTTOMLEFT',12,12)
     local check=button(f,'Check',44,function() A.Refresh('Manual check',true,true) end);check:SetPoint('LEFT',restore,'RIGHT',5,0)
     local settings=button(f,'Settings',57,function() A.ShowSettings() end);settings:SetPoint('LEFT',check,'RIGHT',5,0)
@@ -305,7 +305,7 @@ function A.Draw(rows,reason,force)
     f.displayScopeKey=scopeKey()
     local oldScroll=f.scroll:GetVerticalScroll()
     f.rowCount=#rows
-    A.SetText(f.sub,(A.ChecksIncomplete and A.ChecksIncomplete() and (A.Translate('Some checks unavailable')..' · ') or '')..(A.LocationName() or 'Unknown location')..' · '..A.Translate(#rows..' reminders'))
+    A.SetText(f.sub,(A.ChecksIncomplete and A.ChecksIncomplete() and (A.Translate('Some checks unavailable')..' · ') or '')..(A.LocationName() or A.Translate('Unknown location'))..' · '..A.Translate(#rows..' reminders'))
     -- Reminder rows are pooled; category controls live only in the Filter menu.
     f.rowPool=f.rowPool or {}
     for _,w in ipairs(f.widgets) do w:Hide() end

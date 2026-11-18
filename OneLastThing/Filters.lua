@@ -86,7 +86,7 @@ function A.ShowFilters(anchor)
         m.close:SetScript('OnClick',A.CloseFilters)
         m.scroll=CreateFrame('ScrollFrame',nil,m);m.scroll:SetPoint('TOPLEFT',10,-36);m.scroll:SetSize(270,190)
         m.content=CreateFrame('Frame',nil,m.scroll);m.content:SetSize(266,1);A.AttachScrolling(m.scroll,m.content)
-        m:EnableMouseWheel(true);m:SetScript('OnMouseWheel',function(_,delta) m.scroll:GetScript('OnMouseWheel')(m.scroll,delta) end)
+        m:EnableMouseWheel(true);m:SetScript('OnMouseWheel',function(_,delta) local wheel=m.scroll:GetScript('OnMouseWheel');if wheel then wheel(m.scroll,delta) end end)
         m.rows={}
         table.insert(UISpecialFrames,'OneLastThingFilterMenu')
         m:SetScript('OnHide',function()

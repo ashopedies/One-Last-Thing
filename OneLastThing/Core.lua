@@ -166,7 +166,7 @@ function A.Collect(map, travel, useCache)
     local out = {}
     if not A.db or not map then return out end
     if not useCache and A.InvalidateProviders then A.InvalidateProviders() end
-    A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.collecting=true
+    A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.worldCoordCache={};A.collecting=true
     if A.SyncClassSupplies then A.SyncClassSupplies() end
     for _, name in ipairs({'AttuneRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
         if A.RunProvider then A.RunProvider(name,out,map,travel,useCache)
@@ -179,6 +179,7 @@ function A.Collect(map, travel, useCache)
             return a.priority < b.priority
         end)
     end
+    A.worldCoordCache=nil
     return out
 end
 function A.Refresh(reason, show, manual, forceDraw)
@@ -310,21 +311,26 @@ function A.Navigate(row)
         if placed and after and A.TrackWaypoint and (not before or before.map~=after.map or before.x~=after.x or before.y~=after.y) then A.TrackWaypoint(row) end
         return
     end
+    local attuneOpened=false
     if not native and row.attuneStep and not row.finish and Attune_ToggleView and Attune_Select and Attune_ShowQuestDetail then
         A.Safe('open Attune', Attune_ToggleView, true)
         A.Safe('select Attune chain', Attune_Select, row.attuneStep.ID_ATTUNE, true)
         A.Safe('Attune quest detail', Attune_ShowQuestDetail, row.attuneStep)
+        attuneOpened=true
         -- Attune owns its own map view. The native waypoint below also works when
         -- its full-map setting is off, without modifying that setting.
     end
-    if row.map and row.x and row.y and C_Map and C_Map.SetUserWaypoint and UiMapPoint then
-        if not C_Map.CanSetUserWaypointOnMap or A.Safe('waypoint supported', C_Map.CanSetUserWaypointOnMap, row.map) then
-            local ok,result=pcall(C_Map.SetUserWaypoint,UiMapPoint.CreateFromCoordinates(row.map,row.x/100,row.y/100))
-            if ok and result~=false and A.TrackWaypoint then A.TrackWaypoint(row,row.map,row.x/100,row.y/100) elseif not ok then A.errors['set waypoint']=tostring(result) end
+    if native then
+        local ok,result=pcall(C_Map.SetUserWaypoint,UiMapPoint.CreateFromCoordinates(row.map,row.x/100,row.y/100))
+        if ok and result~=false then
+            if A.TrackWaypoint then A.TrackWaypoint(row,row.map,row.x/100,row.y/100) end
             if C_SuperTrack then A.Safe('track waypoint', C_SuperTrack.SetSuperTrackedUserWaypoint,true) end
+            if OpenWorldMap then A.Safe('open world map', OpenWorldMap,row.map) end
+        else
+            if not ok then A.errors['set waypoint']=tostring(result) end
+            if not attuneOpened then A.Print(row.detail or row.title) end
         end
-        if OpenWorldMap then A.Safe('open world map', OpenWorldMap,row.map) end
-    elseif not row.attuneStep then
+    elseif not attuneOpened then
         A.Print(row.detail or row.title)
     end
 end
