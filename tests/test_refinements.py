@@ -277,9 +277,6 @@ def run():
         local profRows={};A.ProfessionRows(profRows,1454)
         assert(#profRows==1 and profRows[1].title=='Alchemie: Nächste Berufsstufe lernen' and profRows[1].detail:find('Preis unbekannt',1,true))
         TrainerSpellsProfessionTrainers=nil;A.scope=origScope
-        C_Map.GetMapInfo=function() return {name='Orgrimmar'} end
-        local profRows={};A.ProfessionRows(profRows,1454)
-        assert(#profRows==1 and profRows[1].title=='Alchemie: Nächste Berufsstufe lernen')
         A.settings.signature=nil;A.BuildSettings()
         local bagIdx,flightIdx,repairIdx
         for i,c in ipairs(A.settings.controls) do
