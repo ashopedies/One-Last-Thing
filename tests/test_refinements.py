@@ -269,8 +269,14 @@ def run():
         A.Draw({},'Updated')
         assert(A.frame.sub:GetText():find('Unbekannter Ort',1,true))
         A.LocationName=origLocName
+        local origScope=A.scope;A.scope={map=1454,x=.5,y=.5,key='1454:Orgrimmar'}
         local p={skillLineID=171,name='Alchemie',rank=60,maxRank=75,steps={{kind='train',detail='Orgrimmar'}}}
         SkillUpForever={API={version=1,Professions=function() return {p} end}}
+        TrainerSpellsProfessionTrainers={Alchemy={{rank=2,faction='H',names={deDE='Yelmak'},locations={{uiMapID=1454,x=50,y=50}}}}}
+        C_Map.GetMapInfo=function() return {name='Orgrimmar'} end
+        local profRows={};A.ProfessionRows(profRows,1454)
+        assert(#profRows==1 and profRows[1].title=='Alchemie: Nächste Berufsstufe lernen' and profRows[1].detail:find('Preis unbekannt',1,true))
+        TrainerSpellsProfessionTrainers=nil;A.scope=origScope
         C_Map.GetMapInfo=function() return {name='Orgrimmar'} end
         local profRows={};A.ProfessionRows(profRows,1454)
         assert(#profRows==1 and profRows[1].title=='Alchemie: Nächste Berufsstufe lernen')
