@@ -538,8 +538,8 @@ local nodes={
  {nodeID=1,name='Local',faction=1,isUndiscovered=true,position={GetXY=function() return .5,.5 end}},
  {nodeID=2,name='Known',faction=1,isUndiscovered=false,position={GetXY=function() return .5,.5 end}},
  {nodeID=3,name='Enemy',faction=2,isUndiscovered=true,position={GetXY=function() return .5,.5 end}}}
-C_TaxiMap={GetTaxiNodesForMap=function() return nodes end,GetAllTaxiNodes=function() return {{nodeID=1,state=0}} end}
-out={};OneLastThing.FlightRows(out,1454);assert(#out==1 and out[1].flight)
+C_TaxiMap={GetTaxiNodesForMap=function() return nodes end,GetAllTaxiNodes=function() return {{nodeID=1,state=0},{nodeID=2,state=1}} end}
+out={};OneLastThing.FlightRows(out,1454);assert(#out==2 and out[1].flight and out[2].verify)
 OneLastThing.ObserveFlights();nodes[1].isUndiscovered=nil
 out={};OneLastThing.FlightRows(out,1454);assert(#out==0 and OneLastThing.db.flightKnown[1])
 -- Weapon skill rows use only class/faction/level-eligible, unlearned skills.
@@ -2058,3 +2058,5 @@ run_startup_tests()
 run_stability_tests()
 from test_refinements import run as run_refinement_tests
 run_refinement_tests()
+from test_flights import run as run_flight_tests
+run_flight_tests()

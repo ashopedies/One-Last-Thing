@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.14.7 — 2026-11-18
+
+- Fixed a regression in 0.14.6: ShouldMapShowTaxiNodes is a rendering hint, not a data-availability check. Read returned nodes even when it is false, use the continent's coordinate space, and retain child-returned data if the continent request is empty.
+- Added a regression based on the reported Rogmar diagnostic (current map 2548, parent 1415, display false, 36 nodes). It verifies a local reminder before any flight-master interaction, provider health, range/zone isolation and the parent/child fallback.
+- Added map/node/display counts to /olt status when flight data is unavailable, including a separate note when map projection is missing. No additional flight-cache reset is required.
+
+## 0.14.6 — 2026-11-18
+
+- Corrected flight reminders for maps whose flight nodes are supplied in parent/continent coordinates. Follow native map coverage and hierarchy, project nodes onto the current zone, then apply faction and distance filtering. Do not guess local coordinates when conversion data is unavailable.
+- Stopped treating the map's already-discovered flag as proof of a learned route on Forever. Confirm routes from Current/Reachable entries on an opened flight map; uncertain routes use Check flight path wording. Use the opened flight map's own map ID when available.
+- Rebuilt the legacy flight-knowledge cache once because it could contain false learned flags. Character preferences, supply targets and ignored reminders remain intact. Previously learned paths may need one flight-map visit to be reconfirmed.
+- Added tests for parent-map projection, distant/enemy/other-zone exclusion, unreliable discovery flags, observed route knowledge, pin removal on confirmed learning, missing geometry and cache migration.
+
 ## 0.14.5 — 2026-11-18
 
 - Kept skipped, snoozed and ignored nearby profession books from resurfacing as duplicate generic cap warnings. Coverage is recalculated per collection; general warnings remain available elsewhere, outside the vendor range, or when the book provider is disabled.

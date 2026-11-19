@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.5'
+A.version = '0.14.7'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
