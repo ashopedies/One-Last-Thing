@@ -805,7 +805,7 @@ assert(not OneLastThing.db.pin and wp)
 print('PASS: plain/quantized waypoint coordinates, transit cleanup, Dismiss/Trash/Snooze cleanup, accepted quest and learned recipe, retry after clear failure, hyperlink identity fallback, single native quest pin, unrelated pin protection')
 
 lua.execute("""
--- Wording and the overflow menu leave all existing hide lifetimes intact.
+-- Direct row actions preserve visit skips and settings-only ignored recovery.
 OneLastThing.db.dismissed={};OneLastThing.db.snoozed={};OneLastThing.db.trash={};OneLastThing.db.filters={}
 local originalRefresh=OneLastThing.Refresh
 OneLastThing.Refresh=function() end
@@ -813,25 +813,21 @@ local one={key='test:998',title='First reminder'}
 local two={key='test:999',title='Second reminder'}
 OneLastThing.Draw({one,two},'Updated')
 local first=OneLastThing.frame.rowPool[1]
-assert(first.dismiss.text=='Skip this visit' and first.snooze.text=='Hide for 30m' and first.more.text=='...')
-assert(not first.trash)
-first.more.scripts.OnClick();assert(OneLastThing.reminderMenu:IsShown() and not next(OneLastThing.db.trash))
-assert(OneLastThing.reminderMenu.ignore.text=='Don’t remind again')
-OneLastThing.reminderMenu.cancel.scripts.OnClick();assert(not OneLastThing.reminderMenu:IsShown() and not next(OneLastThing.db.trash))
-first.more.scripts.OnClick();OneLastThing.reminderMenu.ignore.scripts.OnClick()
+assert(first.dismiss.text=='Skip' and first.ignore.text=='Ignore')
+assert(not first.more and not first.snooze and not OneLastThing.ShowReminderMenu)
+first.ignore.scripts.OnClick()
 assert(OneLastThing.db.trash['test:998'] and not OneLastThing.db.trash['test:999'])
 OneLastThing.db.dismissed['test:123']=true;OneLastThing.db.snoozed['test:124']=99999
 assert(OneLastThing.frame.restoreButton.text=='Show hidden reminders')
 OneLastThing.frame.restoreButton.scripts.OnClick()
 assert(not next(OneLastThing.db.dismissed) and not next(OneLastThing.db.snoozed) and OneLastThing.db.trash['test:998'])
-first.more.scripts.OnClick();OneLastThing.Draw({two},'Updated',true);assert(not OneLastThing.reminderMenu:IsShown())
 OneLastThing.ShowTrashBin()
 assert(OneLastThing.trashFrame.title.text=='Ignored reminders (1)')
 assert(OneLastThing.trashFrame.rows[1].restore.text=='Remind me again')
 OneLastThing.trashFrame.rows[1].restore.scripts.OnClick();assert(not next(OneLastThing.db.trash))
 OneLastThing.Refresh=originalRefresh
 """)
-print('PASS: plain action labels, permanent hide behind menu, Cancel, exact reminder selection, Show hidden keeps ignored entries, row reuse closes menu, Ignored reminders and Remind me again')
+print('PASS: direct Skip/Ignore actions, no overflow or timer controls, exact target, legacy timed-hide restore, ignored entries restored only from settings')
 
 lua.execute("""
 OneLastThingDB={};OneLastThing.Init();OneLastThing.db.filters={}
@@ -902,14 +898,14 @@ local normalHeight=OneLastThing.frame.content:GetHeight()
 OneLastThing.db.rowMode='compact';OneLastThing.Draw({row},'Updated')
 assert(w:GetHeight()==51 and not w.detail:IsShown())
 assert(OneLastThing.frame.content:GetHeight()<normalHeight)
-assert(w.dismiss:IsShown() and w.snooze:IsShown() and w.more:IsShown() and w.done==nil)
+assert(w.dismiss:IsShown() and w.ignore:IsShown() and not w.snooze and not w.more and w.done==nil)
 local tooltipTitle,tooltipDetail,visible
 GameTooltip={SetOwner=function() end,SetText=function(_,t) tooltipTitle=t end,
  AddLine=function(_,t) tooltipDetail=t end,Show=function() visible=true end,Hide=function() visible=false end}
 w.scripts.OnEnter(w)
 assert(visible and tooltipTitle==row.title and tooltipDetail==row.detail)
 w.scripts.OnLeave();assert(not visible)
-w.more.scripts.OnClick();OneLastThing.SetCollapsed(true,'manual');assert(not OneLastThing.reminderMenu:IsShown())
+OneLastThing.SetCollapsed(true,'manual');assert(OneLastThing.db.collapsed and not OneLastThing.reminderMenu)
 OneLastThing.Init();assert(OneLastThing.db.rowMode=='compact')
 OneLastThing.db.rowMode='default';OneLastThing.Draw({row},'Updated');OneLastThing.SetCollapsed(false,'manual')
 assert(w:GetHeight()==91 and w.detail:IsShown() and OneLastThing.frame.content:GetHeight()==normalHeight)
@@ -926,14 +922,11 @@ local row={key='test:901',title='Minimal reminder',detail='Details still availab
 OneLastThing.Draw({row},'Updated');OneLastThing.SetCollapsed(false,'manual')
 local w=OneLastThing.frame.rowPool[1]
 assert(w:GetHeight()==27 and not w.detail:IsShown())
-assert(not w.go:IsShown() and not w.dismiss:IsShown() and not w.snooze:IsShown() and w.done==nil and w.more:IsShown())
-w.more.scripts.OnClick()
-local m=OneLastThing.reminderMenu
-assert(m.map:IsShown() and m.skip:IsShown() and m.timed:IsShown() and m.done==nil and m.ignore:IsShown())
-m.skip.scripts.OnClick();assert(OneLastThing.db.dismissed[row.key])
-OneLastThing.db.dismissed={};w.more.scripts.OnClick();m.timed.scripts.OnClick();assert(OneLastThing.db.snoozed[row.key]>time())
-OneLastThing.db.rowMode='default';OneLastThing.Draw({row},'Updated');w.more.scripts.OnClick()
-assert(not m.map:IsShown() and not m.skip:IsShown() and m.done==nil and m.ignore:IsShown())
+assert(w.go:IsShown() and w.dismiss:IsShown() and w.ignore:IsShown() and not w.more and not w.snooze)
+w.dismiss.scripts.OnClick();assert(OneLastThing.db.dismissed[row.key])
+OneLastThing.db.dismissed={};w.ignore.scripts.OnClick();assert(OneLastThing.db.trash[row.key])
+OneLastThing.db.trash={};OneLastThing.db.rowMode='default';OneLastThing.Draw({row},'Updated')
+assert(w.go:IsShown() and w.dismiss:IsShown() and w.ignore:IsShown())
 OneLastThing.Init();assert(OneLastThing.db.rowMode=='default')
 -- SharedMedia lists are copied, selected files are fetched without LSM defaults,
 -- missing providers fall back safely without losing the saved selection.
@@ -961,7 +954,7 @@ OneLastThing.settings.layoutPicker.scripts.OnClick();OneLastThing.settings.menu.
 LibStub=nil;OneLastThing.ApplyFonts();assert(path==STANDARD_TEXT_FONT)
 OneLastThing.Refresh=originalRefresh
 """)
-print('PASS: three saved modes and compact migration, minimal one-line rows with all actions in menu, Default controls restored, SharedMedia font enumeration/selection, safe missing-font fallback, late registration, scrollable font dropdown')
+print('PASS: three saved modes and compact migration, minimal one-line rows with direct actions, Default controls restored, SharedMedia font enumeration/selection, safe missing-font fallback, late registration, scrollable font dropdown')
 
 lua.execute("""
 local originalRefresh=OneLastThing.Refresh;OneLastThing.Refresh=function() end
@@ -1140,8 +1133,8 @@ local row={key='quest:999:start',quest=999,title='Pick up: Ruf des Wassers',deta
 for _,mode in ipairs({'default','compact','minimal'}) do
  OneLastThing.db.rowMode=mode;OneLastThing.Draw({row},'Updated')
  assert(OneLastThing.frame.rowPool[1].title.text=='[St. 30] Annehmen: Ruf des Wassers')
- assert(OneLastThing.frame.rowPool[1].dismiss.text=='Diesmal nicht')
- assert(OneLastThing.frame.rowPool[1].snooze.text=='30 Min. Pause')
+ assert(OneLastThing.frame.rowPool[1].dismiss.text==(mode=='minimal' and 'S' or 'Diesmal nicht'))
+ assert(OneLastThing.frame.rowPool[1].ignore.text=='Ignorieren' and not OneLastThing.frame.rowPool[1].snooze)
 end
 OneLastThing.settings.signature=nil;OneLastThing.BuildSettings()
 assert(OneLastThing.settings.sectionButtons.appearance.text=='+ Darstellung')
@@ -1501,14 +1494,14 @@ assert(#OneLastThing.VendorPetFoodChoices()==2)
 local row={key='supply:2287',title='Food',detail='Vendor',map=1458,x=50,y=50}
 OneLastThing.providerHealth={};OneLastThing.db.rowMode='compact';OneLastThing.SetCollapsed(false,'manual');OneLastThing.Draw({row},'Manual check')
 local w=OneLastThing.frame.rowPool[1]
-for _,b in ipairs({w.go,w.dismiss,w.snooze,w.more}) do
+for _,b in ipairs({w.go,w.dismiss,w.ignore}) do
  local fs=b:GetFontString();fs.GetStringWidth=function() return #(b.text or '')*9 end
 end
-OneLastThing.LayoutActions(w,328)
-assert(w.go.text=='M' and w.dismiss.text=='S' and w.snooze.text=='30m')
+OneLastThing.LayoutActions(w,220)
+assert(w.go.text=='M' and w.dismiss.text=='S' and w.ignore.text=='Ignorieren')
 local width=16
-for _,b in ipairs({w.go,w.dismiss,w.snooze,w.more}) do width=width+b:GetWidth()+4 end
-assert(width<=328)
+for _,b in ipairs({w.go,w.dismiss,w.ignore}) do width=width+b:GetWidth()+4 end
+assert(width<=220)
 OneLastThing.LayoutActions(w,900)
 assert(w.go.text=='Karte' and w.dismiss.text=='Diesmal nicht')
 -- Missing prerequisite + no legacy talent inspection is explicitly qualified.
@@ -1627,7 +1620,7 @@ assert(not OneLastThing.db.collapsed and f.rowCount==1)
 -- All layouts keep Filter, omit group headers, and retain row actions.
 for _,mode in ipairs({'default','compact','minimal'}) do
  OneLastThing.db.rowMode=mode;OneLastThing.Refresh();assert(#f.widgets==1 and f.widgets[1].row)
- assert(f.filterButton:IsShown() and f.widgets[1].more:IsShown())
+ assert(f.filterButton:IsShown() and f.widgets[1].ignore:IsShown())
 end
 OneLastThing.db.headerPosition='bottom';OneLastThing.ApplyCollapsed();OneLastThing.ShowFilters(f.filterButton)
 assert(m:IsShown());OneLastThing.SetCollapsed(true,'manual');assert(not m:IsShown() and not f.filterButton:IsShown())
@@ -2060,3 +2053,9 @@ from test_refinements import run as run_refinement_tests
 run_refinement_tests()
 from test_flights import run as run_flight_tests
 run_flight_tests()
+from test_city_visits import run as run_city_visit_tests
+run_city_visit_tests()
+from test_mage_portals import run as run_mage_portal_tests
+run_mage_portal_tests()
+from test_row_actions import run as run_row_action_tests
+run_row_action_tests()

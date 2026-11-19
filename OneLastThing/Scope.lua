@@ -16,6 +16,7 @@ function A.UpdateScope()
     A.scope=nil
     if A.InTransit() then return nil end
     local map=A.Map();if not map then return end
+    if not A.IsCapitalMap(map) then A.cityVisitMap=nil end
     local name=localName(map)
     local getPos=C_Map and C_Map.GetPlayerMapPosition
     local pos=getPos and A.Safe('local player position',getPos,map,'player')
@@ -27,7 +28,8 @@ function A.UpdateScope()
         x,y=pos:GetXY()
         if x<0 or x>1 or y<0 or y>1 or (x==0 and y==0) then return nil end
     end
-    A.scope={map=map,name=name,x=x,y=y,key=tostring(map)..':'..tostring(name),noFilter=not getPos}
+    local key=A.IsCapitalMap(map) and tostring(map) or (tostring(map)..':'..tostring(name))
+    A.scope={map=map,name=name,x=x,y=y,key=key,noFilter=not getPos}
     A.status.Location=name..(A.IsCapitalMap(map) and ' | city-wide reminders' or (A.db.nearbyOnly==false and ' | whole map' or (' | nearby reminders: '..(A.db.nearbyRadius or 850)..' yards')))
     return A.scope
 end
@@ -69,7 +71,6 @@ function A.ClearLocation(recover,previous)
         A.scopeRecovery={key=scope and scope.key,manual=A.db.auto==false}
     elseif not recover then A.scopeRecovery=nil end
     A.scope=nil
-    if A.reminderMenu then A.reminderMenu:Hide() end
     if A.frame then A.frame:Hide() end
 end
 function A.RequireScope()

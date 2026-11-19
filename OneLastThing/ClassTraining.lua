@@ -17,6 +17,40 @@ local function factionMatches(required,faction)
     if not required or required=='' or required=='AH' or required=='Both' then return true end
     return required==faction or required==(faction=='Horde' and 'H' or 'A')
 end
+-- Spell-to-city identity only. Names and positions stay in installed data.
+local portalSpells,portalCities={},{}
+for _,city in ipairs({
+    {1453,2485,3561,10059}, {1455,2489,3562,11416},
+    {1458,2492,3563,11418}, {1457,4165,3565,11419},
+    {1456,5957,3566,11420}, {1454,5958,3567,11417},
+}) do
+    portalSpells[city[3]]=city;portalSpells[city[4]]=city;portalCities[city[1]]=true
+end
+local function portalLocations(id,map,explicit)
+    local city=portalSpells[id]
+    if not city then return explicit end
+    if map~=city[1] then return {} end
+    if explicit then return explicit end
+    local locale=GetLocale and GetLocale() or 'enUS'
+    local faction=UnitFactionGroup('player')
+    for _,trainer in ipairs((TrainerSpellsPortalTrainers and TrainerSpellsPortalTrainers.MAGE) or {}) do
+        if trainer.npcID==city[2] and factionMatches(trainer.faction,faction) then
+            local names=trainer.names or {}
+            local native=LibQuestieDB and LibQuestieDB.Npc and A.Safe('portal trainer name',LibQuestieDB.Npc.Get,trainer.npcID,'name')
+            local name=native or names[locale] or names.enUS or A.Translate('Portal trainer')
+            local locations={}
+            for _,location in ipairs(trainer.locations or {}) do
+                if location.uiMapID==map and type(location.x)=='number' and type(location.y)=='number'
+                    and factionMatches(location.faction,faction) then
+                    locations[#locations+1]={uiMapID=map,x=location.x,y=location.y,name=name,faction=trainer.faction}
+                end
+            end
+            if #locations>0 then return locations end
+        end
+    end
+    if A.CheckUnavailable then A.CheckUnavailable('Portal-trainer data unavailable') end
+    return {} -- never substitute a general Mage trainer for a portal trainer
+end
 function A.LocalClassTrainer(map,locations)
     local _,class=UnitClass('player');local faction=UnitFactionGroup('player')
     local locale=GetLocale and GetLocale() or 'enUS'
@@ -61,7 +95,8 @@ function A.ClassSpellData()
     local _,class=UnitClass('player')
     local data=TrainerSpells_Data and TrainerSpells_Data[class]
     if type(data)~='table' or not next(data) then data=TrainerSpellsBuiltin and TrainerSpellsBuiltin[class] end
-    return data,TrainerSpellsClassTrainers and TrainerSpellsClassTrainers[class]
+    return data,TrainerSpellsClassTrainers and TrainerSpellsClassTrainers[class],
+        class=='MAGE' and TrainerSpellsPortalTrainers and TrainerSpellsPortalTrainers.MAGE or nil
 end
 function A.PlaceClassSpell(row,map)
     local target=A.LocalClassTrainer(map,row.trainerLocations)
@@ -79,7 +114,10 @@ function A.ClassSpellRows(out,map)
         return
     end
     local trainer=A.LocalClassTrainer(map)
-    if not trainer then A.status.ClassSpells='TrainerSpells connected; no suitable class trainer in this zone';return end
+    local _,class=UnitClass('player')
+    if not trainer and not (class=='MAGE' and portalCities[map]) then
+        A.status.ClassSpells='TrainerSpells connected; no suitable class trainer in this zone';return
+    end
     local level=UnitLevel('player');local faction=UnitFactionGroup('player')
     local race;if UnitRace then local _,token=UnitRace('player');race=token end
     local knownRanks,entries={},{}
@@ -120,9 +158,10 @@ function A.ClassSpellRows(out,map)
         if name and unknown and not ignored and not gated and not questReward and d.status~='missing'
             and entry.level<=level and (not d.levelReq or d.levelReq<=level)
             and factionMatches(d.faction,faction) and raceMatches(d.race,race) then
+            local locations=portalLocations(id,map,d.sourceLocations)
             local target=trainer
             -- Explicit sources must match this zone, not any class trainer.
-            if d.sourceLocations then target=A.LocalClassTrainer(map,d.sourceLocations) end
+            if locations then target=A.LocalClassTrainer(map,locations) end
             if target then
                 local cost=tonumber(d.cost) or 0
                 local price=A.FormatMoney(cost)
@@ -130,7 +169,7 @@ function A.ClassSpellRows(out,map)
                 local detail=' | '..price..(shortage and ' (short on gold)' or '')..(uncertain and '\nRequirements not verified; check availability at the trainer.' or '\nTrainerSpells catalogue; dismiss a rank to save it for later.')
                 A.Add(out,{key='train:spell:'..id,title=(uncertain and 'Check training: ' or 'Train: ')..name..(entry.rank and (' — Rank '..entry.rank) or ''),
                     detail=target.name..detail,
-                    classSpell=true,trainerLocations=d.sourceLocations,
+                    classSpell=true,trainerLocations=locations,
                     trainerDetail=detail,
                     map=target.map,x=target.x,y=target.y,priority=25,spell=id,cost=cost,rank=entry.rank,spellName=name,verify=true})
                 count=count+1

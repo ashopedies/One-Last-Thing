@@ -24,8 +24,9 @@ local currentLocation,pendingLocation,currentMap
 local zone
 zone=function()
     if A.loadingWorld then A.ClearLocation();return end
-    if A.AutomaticSuppressed() then if not A.manualInstance then A.ClearLocation() end;return end
+    if A.AutomaticSuppressed() then A.cityVisitMap=nil;if not A.manualInstance then A.ClearLocation() end;return end
     if A.InTransit() then
+        A.cityVisitMap=nil
         A.travelPending=true;pendingLocation=nil;A.scopeRecovery=nil
         if A.frame then A.frame:Hide() end
         return
@@ -50,7 +51,11 @@ zone=function()
             currentMap=confirmed.map
             currentLocation=key;A.travelPending=nil
             if newVisit then
-                A.InvalidateProviders();A.BeginVisit();schedule('Entering '..confirmed.name,true)
+                A.InvalidateProviders()
+                -- Loading within the same capital is still the same visit.
+                if not (A.IsCapitalMap(confirmed.map) and A.cityVisitMap==confirmed.map) then A.BeginVisit() end
+                A.cityVisitMap=A.IsCapitalMap(confirmed.map) and confirmed.map or nil
+                schedule('Entering '..confirmed.name,true)
             elseif recovery then
                 A.Safe('restore location checklist',A.Refresh,'Location restored',true,recovery.manual)
             end
@@ -73,7 +78,7 @@ events:SetScript('OnEvent',function(_,event,...)
         if not A.zoneTicker then A.zoneTicker=C_Timer.NewTicker(2,zone) end
         if not A.refreshTicker then A.refreshTicker=C_Timer.NewTicker(5,function()
             A.refreshTick=(A.refreshTick or 0)+1
-            local menuOpen=(A.filterMenu and A.filterMenu:IsShown()) or (A.reminderMenu and A.reminderMenu:IsShown())
+            local menuOpen=A.filterMenu and A.filterMenu:IsShown()
             if ready and A.frame and A.frame:IsShown() and not menuOpen and (not A.db.collapsed or A.refreshTick%4==0) then schedule('Updated',false) end
         end) end
     elseif event=='PLAYER_LEAVING_WORLD' then

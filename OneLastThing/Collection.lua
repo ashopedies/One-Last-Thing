@@ -72,13 +72,13 @@ function A.RunProvider(name,out,map,travel,useCache)
     local fn=A[name]
     if type(fn)~='function' then A.providerHealth[name]='Check unavailable';return end
     local key=tostring(map)..':'..tostring(travel)..':'..tostring(UnitLevel('player'))
-    local classData,classTrainers
+    local classData,classTrainers,classPortals
     if name=='ClassSpellRows' then
-        if A.ClassSpellData then classData,classTrainers=A.ClassSpellData() end
+        if A.ClassSpellData then classData,classTrainers,classPortals=A.ClassSpellData() end
     elseif name=='AttuneRows' then key=key..':'..tostring(Attune_Data)..':'..tostring(A.db.attuneAllChains) end
     local cache=A.providerCache and A.providerCache[name]
     if useCache and cached[name] and not warning and cache and cache.fn==fn and cache.key==key
-        and cache.data==classData and cache.trainers==classTrainers and time()-cache.when<60 then
+        and cache.data==classData and cache.trainers==classTrainers and cache.portals==classPortals and time()-cache.when<60 then
         for _,row in ipairs(cache.rows) do
             if row.classSpell and A.PlaceClassSpell then row=A.PlaceClassSpell(row,map) end
             if row then A.Add(out,row) end
@@ -102,7 +102,7 @@ function A.RunProvider(name,out,map,travel,useCache)
     A.errors[name]=nil
     if warning then A.providerHealth[name]=warning end
     if useCache and cached[name] and not warning then
-        A.providerCache=A.providerCache or {};A.providerCache[name]={fn=fn,key=key,when=time(),rows=raw,data=classData,trainers=classTrainers}
+        A.providerCache=A.providerCache or {};A.providerCache[name]={fn=fn,key=key,when=time(),rows=raw,data=classData,trainers=classTrainers,portals=classPortals}
     end
     for i=seeded+1,#raw do A.Add(out,raw[i]) end
 end

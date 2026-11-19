@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.7'
+A.version = '0.14.9'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
@@ -19,6 +19,7 @@ function A.Init()
     if A.ValidateSavedData then A.ValidateSavedData() end
     OneLastThingDB = OneLastThingDB or {}
     A.db = OneLastThingDB
+    A.cityVisitMap=nil
     local d = A.db
     d.notes=nil
     -- Retire only custom-note choices; automatic reminders retain their state.

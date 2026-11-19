@@ -1,4 +1,4 @@
-ONE LAST THING — 0.14.7
+ONE LAST THING — 0.14.9
 WoW Forever / interface 16001
 
 INSTALL
@@ -12,7 +12,7 @@ Restart WoW. /olt opens the checklist; /olt settings opens settings.
 DATA SOURCES
 Attune: quest chains. Questie / QuestieDB: quests, NPCs, vendors and repairs.
 SkillUp Forever: profession state and ranks/books, not recipe shopping.
-TrainerSpells: class ranks, trainer locations and weapon skills.
+TrainerSpells: class ranks, city-specific Mage portal trainers and weapon skills.
 NeavMedia / LibSharedMedia: optional media/fonts. Built-in Arial is available.
 No hard dependencies; missing providers reduce the corresponding coverage.
 Settings > Addon requirements shows connection status.
@@ -36,10 +36,12 @@ Automatic opening is suppressed inside dungeons, raids and battlegrounds.
 /olt still opens a manual checklist there, even if automatic popups are off.
 Missing map/position data and loading transitions hide old location content.
 
-Skip this visit: returns next locality visit or reload.
-Hide for 30m: pauses for 30 minutes, including across locations.
-Don't remind again: hidden until Settings > Ignored reminders > Remind me again.
-Show hidden reminders only restores visit skips and timed pauses.
+Map, Skip and Ignore are directly available in every reminder layout.
+Minimal/narrow rows use M/S for Map/Skip and keep Ignore visible.
+Skip: returns next locality visit or reload.
+All districts within a capital count as one visit.
+Ignore: hidden until Settings > Ignored reminders > Remind me again.
+Show hidden reminders restores visit skips; old timed hides remain compatible.
 
 ORDINARY QUEST TURN-INS
 Off by default to avoid duplicate reminders from quest trackers. Opt in under

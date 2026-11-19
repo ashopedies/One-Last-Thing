@@ -13,37 +13,6 @@ local function hint(b,text)
     end)
     b:SetScript('OnLeave',function(self) if leave then leave(self) end;if GameTooltip then GameTooltip:Hide() end end)
 end
-function A.ShowReminderMenu(anchor,row)
-    if A.CloseFilters then A.CloseFilters() end
-    local m=A.reminderMenu
-    if m and m:IsShown() and m.row==row then m:Hide();return end
-    if not m then
-        m=CreateFrame('Frame','OneLastThingReminderMenu',UIParent,'BackdropTemplate');A.reminderMenu=m
-        m:SetFrameStrata('DIALOG');m:SetClampedToScreen(true);m.pitSettingsBackground=true;A.Panel(m)
-        local function action(label,fn)
-            return button(m,label,230,function() local selected=m.row;m:Hide();if selected then fn(selected) end end)
-        end
-        m.map=action('Map',A.Navigate);m.skip=action('Skip this visit',A.Dismiss)
-        m.timed=action('Hide for 30m',function(r) A.Snooze(r) end)
-        m.ignore=action('Don’t remind again',A.Trash);A.Tint(m.ignore:GetFontString(),'urgent')
-        m.help=m:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');m.help:SetWidth(230);m.help:SetHeight(22)
-        A.SetText(m.help,'Manage in Settings > Ignored reminders');A.Font(m.help,10,true)
-        m.cancel=button(m,'Cancel',230,function() m:Hide() end)
-        table.insert(UISpecialFrames,'OneLastThingReminderMenu')
-    end
-    local minimal=A.db.rowMode=='minimal'
-    m.map:SetShown(minimal and ((row.map and row.x and row.y) or row.skill~=nil or row.attuneStep~=nil) and true or false)
-    m.skip:SetShown(minimal);m.timed:SetShown(minimal)
-    m.ignore:Show()
-    local y=7
-    for _,control in ipairs({m.map,m.skip,m.timed,m.ignore}) do
-        if control:IsShown() then control:ClearAllPoints();control:SetPoint('TOPLEFT',9,-y);y=y+27 end
-    end
-    m.help:ClearAllPoints();m.help:SetPoint('TOPLEFT',9,-y);y=y+26
-    m.cancel:ClearAllPoints();m.cancel:SetPoint('TOPLEFT',9,-y)
-    m:SetSize(248,y+30)
-    m.row=row;m:ClearAllPoints();m:SetPoint('TOPRIGHT',anchor,'BOTTOMRIGHT',0,-3);m:Show()
-end
 local function savePosition(f)
     local point,_,relativePoint,x,y=f:GetPoint(1)
     A.db.position={point=point,relativePoint=relativePoint,x=x,y=y}
@@ -51,23 +20,29 @@ end
 function A.LayoutActions(w,width)
     if not w.go then return end
     local minimal=A.db.rowMode=='minimal'
-    local controls={{w.go,'Map','M',44},{w.dismiss,'Skip this visit','S',108},{w.snooze,'Hide for 30m','30m',98},{w.more,'...','...',26}}
+    local controls={{w.go,'Map','M',40},{w.dismiss,'Skip','S',44},{w.ignore,'Ignore','Ignore',54}}
     local needed=16
     for _,c in ipairs(controls) do if c[1]:IsShown() then
         A.SetText(c[1],c[2]);local fs=c[1]:GetFontString()
         local measured=fs and fs.GetStringWidth and fs:GetStringWidth() or 0
         c.width=math.max(c[4],math.ceil(measured+16));needed=needed+c.width+4
     end end
-    local small=needed>width
-    local left=8
+    local small=minimal or needed>width
+    local total=0
     for _,c in ipairs(controls) do local b=c[1];if b:IsShown() then
         A.SetText(b,small and c[3] or c[2]);local fs=b:GetFontString()
         local measured=fs and fs.GetStringWidth and fs:GetStringWidth() or 0
-        b:SetWidth(small and math.max(26,math.ceil(measured+12)) or c.width)
-        b:ClearAllPoints();b:SetPoint('BOTTOMLEFT',w,'BOTTOMLEFT',left,A.db.rowMode=='default' and 7 or 4)
+        b:SetWidth(small and math.max(c[3]=='Ignore' and 54 or 26,math.ceil(measured+12)) or c.width)
+        total=total+b:GetWidth()+4
+    end end
+    w.actionsWidth=math.max(0,total-4)
+    local left=minimal and (width-8-w.actionsWidth) or 8
+    for _,c in ipairs(controls) do local b=c[1];if b:IsShown() then
+        b:ClearAllPoints()
+        if minimal then b:SetPoint('LEFT',w,'LEFT',left,0)
+        else b:SetPoint('BOTTOMLEFT',w,'BOTTOMLEFT',left,A.db.rowMode=='default' and 7 or 4) end
         left=left+b:GetWidth()+4
     end end
-    if minimal then w.more:ClearAllPoints();w.more:SetPoint('RIGHT',w,'RIGHT',-8,0) end
 end
 A.shortCategoryNames={quests='Quests',professions='Professions',training='Training',supplies='Supplies',errands='Errands'}
 local function rowLabel(w,width)
@@ -81,9 +56,11 @@ local function rowLabel(w,width)
     A.SetText(w.tag,value);w.tag:SetWidth(0)
     local tagWidth=0
     if show then tagWidth=math.min(160,width*.40,(w.tag.GetStringWidth and w.tag:GetStringWidth() or 80)+3);w.tag:SetWidth(tagWidth) end
+    local reserved=minimal and ((w.actionsWidth or 0)+24) or 18
+    if minimal and width-reserved-tagWidth-10<90 then show=false;tagWidth=0 end
     w.tag:SetShown(show)
-    w.tag:ClearAllPoints();w.tag:SetPoint('TOPRIGHT',minimal and -44 or -9,A.db.rowMode=='default' and -8 or -5)
-    w.title:SetWidth(width-(minimal and 50 or 18)-(show and (tagWidth+10) or 0))
+    w.tag:ClearAllPoints();w.tag:SetPoint('TOPRIGHT',minimal and -((w.actionsWidth or 0)+18) or -9,A.db.rowMode=='default' and -8 or -5)
+    w.title:SetWidth(math.max(24,width-reserved-(show and (tagWidth+10) or 0)))
 end
 function A.Layout()
     local f=A.frame;if not f then return end
@@ -154,11 +131,11 @@ local function make()
     f.grip:SetScript('OnMouseUp',function() f:StopMovingOrSizing();A.db.size={width=f:GetWidth(),height=f:GetHeight()};savePosition(f) end)
     hint(f.grip,'Drag to resize the window.')
     hint(check,'Refresh the checklist for your current location. Does not restore hidden reminders, purchase items or learn spells.')
-    hint(restore,'Show reminders skipped this visit or hidden for 30 minutes. Ignored reminders and disabled categories stay hidden.')
+    hint(restore,'Show reminders skipped this visit. Ignored reminders and disabled categories stay hidden.')
     f:SetScript('OnHide',function()
         A.pendingDraw=nil;f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil)
         f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
-        if A.reminderMenu then A.reminderMenu:Hide() end;if A.filterMenu then A.filterMenu:Hide() end
+        if A.filterMenu then A.filterMenu:Hide() end
     end)
     f.restoreButton=restore
     f.chrome={f.sub,f.close,f.filterButton,f.scroll,restore,check,settings,f.smaller,f.larger,f.grip}
@@ -210,7 +187,6 @@ function A.ApplyCollapsed()
     local f=A.frame;if not f or not f.chrome or f.applyingCollapse then return end
     f.applyingCollapse=true
     local collapsed=A.db.collapsed
-    if collapsed and A.reminderMenu then A.reminderMenu:Hide() end
     if collapsed and A.filterMenu then A.filterMenu:Hide() end
     local empty=(f.rowCount or 0)==0
     local incomplete=A.ChecksIncomplete and A.ChecksIncomplete()
@@ -271,7 +247,6 @@ end
 function A.ReminderInteractionActive()
     local f=A.frame
     if not f or not f:IsShown() or A.db.collapsed then return false end
-    if A.reminderMenu and A.reminderMenu:IsShown() then return true end
     for _,w in ipairs(f.widgets) do
         if w.row and w:IsShown() and w:IsMouseOver() then return true end
     end
@@ -300,7 +275,6 @@ function A.Draw(rows,reason,force)
         return
     end
     A.pendingDraw=nil
-    if A.reminderMenu then A.reminderMenu:Hide();A.reminderMenu.row=nil end
     f=f or make()
     f.displayScopeKey=scopeKey()
     local oldScroll=f.scroll:GetVerticalScroll()
@@ -336,15 +310,12 @@ function A.Draw(rows,reason,force)
                         end)
                         w:SetScript('OnLeave',function() if GameTooltip then GameTooltip:Hide() end end)
                         w.go=button(w,'Map',44,function() A.Navigate(w.row) end);w.go:SetPoint('BOTTOMLEFT',8,7)
-                        w.dismiss=button(w,'Skip this visit',108,function() A.Dismiss(w.row) end);w.dismiss:SetPoint('LEFT',w.go,'RIGHT',4,0)
-                        w.snooze=button(w,'Hide for 30m',98,function() A.Snooze(w.row) end);w.snooze:SetPoint('LEFT',w.dismiss,'RIGHT',4,0)
-                        w.more=button(w,'...',26,function() A.ShowReminderMenu(w.more,w.row) end)
-                        hint(w.go,'Map');hint(w.dismiss,'Returns on your next visit to this locality, or after reloading. Show hidden reminders brings it back sooner.')
-                        hint(w.snooze,'Hidden for 30 minutes, even if you change zones. Show hidden reminders brings it back sooner.')
-                        hint(w.more,'More options, including Don’t remind again.')
+                        w.dismiss=button(w,'Skip',44,function() A.Dismiss(w.row) end)
+                        w.ignore=button(w,'Ignore',54,function() A.Trash(w.row) end)
+                        hint(w.go,'Map');hint(w.dismiss,'Returns on your next visit to this locality, or after reloading. Show hidden reminders brings it back sooner.\n\nDistricts within a capital count as one visit.')
+                        hint(w.ignore,'Do not remind again. Restore in Settings > Ignored reminders.')
                         f.rowPool[rowIndex]=w
                     end
-                    A.SetText(w.dismiss,'Skip this visit');A.SetText(w.snooze,'Hide for 30m')
                     w.row=row;w:ClearAllPoints();w:SetPoint('TOPLEFT',0,-y)
                     local compact=A.db.rowMode~='default'
                     local minimal=A.db.rowMode=='minimal'
@@ -356,13 +327,9 @@ function A.Draw(rows,reason,force)
                     w.detail:SetShown(not compact)
                     A.SetText(w.title,A.DisplayTitle(row));A.SetText(w.detail,A.DisplayDetail(row))
                     A.Tint(w.title,A.RowTone(row));A.Tint(w.go:GetFontString(),'action')
-                    A.Tint(w.dismiss:GetFontString(),'dismiss');A.Tint(w.snooze:GetFontString(),'snooze');A.Tint(w.more:GetFontString(),'muted')
-                    w.go:SetShown(not minimal and ((row.map~=nil and row.x~=nil and row.y~=nil) or row.skill~=nil or row.attuneStep~=nil))
-                    w.dismiss:SetShown(not minimal);w.snooze:SetShown(not minimal);w.more:Show()
-                    local left=8
-                    for _,control in ipairs({w.go,w.dismiss,w.snooze,w.more}) do
-                        if control:IsShown() then control:ClearAllPoints();control:SetPoint('BOTTOMLEFT',w,'BOTTOMLEFT',left,compact and 4 or 7);left=left+control:GetWidth()+4 end
-                    end
+                    A.Tint(w.dismiss:GetFontString(),'dismiss');A.Tint(w.ignore:GetFontString(),'urgent')
+                    w.go:SetShown((row.map~=nil and row.x~=nil and row.y~=nil) or row.skill~=nil or row.attuneStep~=nil)
+                    w.dismiss:Show();w.ignore:Show()
                     A.LayoutActions(w,f:GetWidth()-32)
                     w:Show();f.widgets[#f.widgets+1]=w
     end

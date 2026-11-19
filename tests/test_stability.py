@@ -50,37 +50,29 @@ def run():
         w.mouseOver=false;timerStep()
 
         A.db.dismissed={};testRows={alpha,beta};A.Refresh('Manual check',true,true)
-        w.more.scripts.OnClick()
-        local menu=A.reminderMenu
-        testRows={beta,alpha};event(nil,'BAG_UPDATE_DELAYED');timerStep()
-        assert(menu:IsShown() and menu.row==alpha and w.row==alpha)
-        menu.ignore.scripts.OnClick()
+        w.mouseOver=true;testRows={beta,alpha};event(nil,'BAG_UPDATE_DELAYED');timerStep()
+        assert(w.row==alpha and A.pendingDraw)
+        w.ignore.scripts.OnClick()
         assert(A.db.trash[alpha.key] and not A.db.trash[beta.key])
-        assert(w.row==beta and not A.pendingDraw and not menu:IsShown())
-        timerStep()
+        assert(w.row==beta and not A.pendingDraw)
+        w.mouseOver=false;timerStep()
 
         A.db.trash={};testRows={alpha,beta};A.Refresh('Manual check',true,true)
         w.mouseOver=true;testRows={beta,alpha};A.Refresh('Updated',false)
-        w.snooze.scripts.OnClick()
-        assert(A.db.snoozed[alpha.key] and not A.db.snoozed[beta.key] and w.row==beta)
         w.mouseOver=false;timerStep()
-
-        A.db.snoozed={};testRows={alpha,beta};A.Refresh('Manual check',true,true)
-        w.more.scripts.OnClick();testRows={beta,alpha};A.Refresh('Updated',false)
-        menu.cancel.scripts.OnClick();timerStep()
         assert(w.row==beta and not A.pendingDraw)
 
         w.mouseOver=true;testRows={alpha,beta};A.Refresh('Updated',false)
         A.frame:Hide();w.mouseOver=false;timerStep()
         assert(not A.frame:IsShown() and not A.pendingDraw)
 
-        A.Refresh('Manual check',true,true);w.more.scripts.OnClick()
+        A.Refresh('Manual check',true,true);w.mouseOver=true
         testRows={beta,alpha};A.Refresh('Updated',false)
         C_Map.GetBestMapForUnit=function() return 1454 end
         beta.map=1454;testRows={beta}
         A.Refresh('Entering Orgrimmar',true)
-        assert(w.row==beta and not menu:IsShown() and not A.pendingDraw)
-        timerStep();assert(w.row==beta)
+        assert(w.row==beta and not A.pendingDraw)
+        w.mouseOver=false;timerStep();assert(w.row==beta)
 
         w.mouseOver=true;testRows={};A.Refresh('Updated',false)
         assert(not A.db.collapsed and A.pendingDraw)
@@ -89,8 +81,8 @@ def run():
         combat=false;event(nil,'PLAYER_REGEN_ENABLED');timerStep()
         assert(A.db.collapsed and A.frame.rowCount==0 and not A.pendingDraw)
     ''')
-    print('PASS: hover/menu stability, one wait timer, event refresh, exact action targets, '
-          'immediate Skip/Hide/Ignore, cancel, close, zone change, completion and combat recovery')
+    print('PASS: hover stability, one wait timer, event refresh, exact direct Skip/Ignore targets, '
+          'pointer release, close, zone change, completion and combat recovery')
 
     vm = fresh_client(saved='{collapsed=true,collapseMode="manual"}')
     vm.execute('''

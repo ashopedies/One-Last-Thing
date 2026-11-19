@@ -1,5 +1,14 @@
 local _,A=...
 local de={
+ ["Class spells, portal trainers, weapon skills and profession trainer locations."]="Klassenfähigkeiten, Portallehrer, Waffenfertigkeiten und Standorte von Berufslehrern.",
+ ["Show hidden: reminders skipped this visit."]="Wieder anzeigen: diesmal übersprungene Hinweise.",
+ ["Skipped reminders are visible again. Ignored reminders and category choices stay unchanged."]="Diesmal übersprungene Hinweise werden wieder angezeigt. Ignorierte Hinweise und Gruppen bleiben unverändert.",
+ ["Skip"]="Diesmal nicht",["Ignore"]="Ignorieren",
+ ["Do not remind again. Restore in Settings > Ignored reminders."]="Nicht mehr erinnern. Unter Einstellungen > Ignorierte Hinweise wiederherstellen.",
+ ["Show reminders skipped this visit. Ignored reminders and disabled categories stay hidden."]="Diesmal übersprungene Hinweise wieder anzeigen. Ignorierte Hinweise und deaktivierte Gruppen bleiben ausgeblendet.",
+ ["Portal trainer"]="Portallehrer",
+ ["Portal-trainer data unavailable"]="Daten zu Portallehrern nicht verfügbar",
+ ["Districts within a capital count as one visit."]="Alle Stadtviertel einer Hauptstadt zählen als ein Besuch.",
  ["Decrease font size"]="Schrift verkleinern",["Increase font size"]="Schrift vergrößern",
  ["Drag to resize the window."]="Ziehen, um die Fenstergröße zu ändern.",
  ["Class spells, weapon skills and profession trainer locations."]="Klassenfähigkeiten, Waffenfertigkeiten und Standorte von Berufslehrern.",

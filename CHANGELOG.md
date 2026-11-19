@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.9 — 2026-11-19
+
+- Routed the twelve capital Teleport/Portal spells to their own city and the matching NPC from TrainerSpellsPortalTrainers. General class trainers no longer receive these reminders. Existing level, faction, learned/ignored-spell and cost handling remains in place; localized NPC names come from installed data.
+- Kept cached portal destinations tied to their actual sources and invalidate when the installed portal table changes. A missing local portal record reports unavailable data instead of substituting an unrelated class trainer. Added 96 city/level/language cases plus cache, learning, faction, explicit-source and missing-data checks.
+- Replaced the row overflow menu with a directly accessible Ignore button. Rows now offer Map, Skip and Ignore in Default, Compact and Minimal layouts; narrow/Minimal layouts use M/S where needed while reserving space for the title and Ignore label.
+- Removed the 30-minute hide control. Older saved timed hides still expire or can be restored normally, without changing per-character preferences. Skip and Ignore have distinct English/German tooltips and Ignore remains recoverable only through Settings.
+- Updated layout/interaction regressions for direct actions, narrow and wide windows, all density modes, English/German and the supported font-size range. Preserved the capital-visit and flight-path fixes from previous versions.
+
+## 0.14.8 — 2026-11-18
+
+- Treat each of the six capitals as one visit instead of starting a new visit at every district or indoor boundary. Skip this visit stays active across city districts; the header still shows the current district.
+- Preserve capital visit skips through temporary position loss and same-city loading transitions. Leaving/re-entering the capital or reloading resets visit skips as before; timed hides, ignored reminders and outdoor locality visits keep their own behaviour.
+- Clarified the Skip tooltip in English and German. Added regression coverage for all six capitals, district labels, collapsed state, loading recovery, city exit/re-entry and the other hide lifetimes.
+
 ## 0.14.7 — 2026-11-18
 
 - Fixed a regression in 0.14.6: ShouldMapShowTaxiNodes is a rendering hint, not a data-availability check. Read returned nodes even when it is false, use the continent's coordinate space, and retain child-returned data if the continent request is empty.

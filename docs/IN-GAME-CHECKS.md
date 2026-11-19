@@ -1,6 +1,6 @@
-# Live-client checks for 0.14.7
+# Live-client checks for 0.14.9
 
-New in 0.14.4: with Neav Express selected, confirm distance labels show ~ and the row menu shows ... without squares. Collapse a nonempty checklist and portal into a capital; it should expand. Collapse it again and walk into another district of that city; it should stay collapsed.
+New in 0.14.4: with Neav Express selected, confirm distance labels show ~ and the row actions show Map/Skip/Ignore without squares. Collapse a nonempty checklist and portal into a capital; it should expand. Collapse it again and walk into another district of that city; it should stay collapsed.
 
 New in 0.14.5: hide a nearby Expert profession book and confirm its generic cap warning does not replace it. Revisit after a timed hide expires. Move between class trainers and check the destination follows the nearest suitable trainer, including special spell sources. Reopen Settings and check the range, completion delay and repair sliders match saved values. Let an empty checklist fade, then hover/expand it and check the usual behaviour remains.
 
@@ -8,9 +8,13 @@ New in 0.14.6: enter Rogmar or another settlement with an unlearned flight point
 
 New in 0.14.7: in Riverglades/Rogmar, verify flight reminders can appear before interacting with a flight master, even when the map-display flag is false. If the warning remains, send /olt status; it now includes queried map IDs, node counts and map-projection failures.
 
+New in 0.14.8: skip a reminder in a capital, then walk between districts and indoor areas. The district label should update while the skipped reminder stays hidden. Leave the city and return; the visit-skipped reminder should return. Timed hides and ignored reminders should remain hidden. Repeat in German if available.
+
+New in 0.14.9: on a Mage, visit capitals with unlearned Teleport/Portal spells. Only that city's eligible spells should appear and Map should target the portal trainer. Learn/skip/ignore a spell and check its reminder clears. Test direct Map/Skip/Ignore in Default, Compact and Minimal at narrow widths and large fonts, in English/German. Ignore can be recovered in Settings; Show hidden reminders only restores temporary skips (and legacy timed hides).
+
 Automated behavior checks pass against simulated Lua 5.1 APIs. The current Forever build, protected execution and live databases still require in-game verification.
 
-New in 0.14.3: turn off the outside-city range filter and confirm every located reminder still belongs to the current map. Hover a reminder or open its ⋯ menu while a bag/quest update happens; the row and menu should stay put until you finish interacting. Skip, Hide and Ignore should affect the selected task immediately. On a hunter without selected ammunition, open Settings and check that no error appears. Repeat these checks in English or German as available.
+New in 0.14.3: turn off the outside-city range filter and confirm every located reminder still belongs to the current map. Hover a reminder while a bag/quest update happens; the row should stay put until you finish interacting. Skip and Ignore should affect the selected task immediately. On a hunter without selected ammunition, open Settings and check that no error appears. Repeat these checks in English or German as available.
 
 1. **Settings and stock:** edit the Ankh target repeatedly, add/remove a custom item, change fonts and reload. Confirm amounts, disabled categories, ignored reminders and layout remain correct. If profiling, UI object count should stop increasing for equivalent settings rebuilds after the first construction.
 2. **Location and instances:** fly or portal between localities and enter/leave an instance or battleground. Old locality content should disappear during loading. Instances should not open the popup automatically. `/olt` should open it manually, including with automatic popups disabled. After closing that manual instance popup, merchant or other automatic events must not reopen it.

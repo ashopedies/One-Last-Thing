@@ -41,7 +41,7 @@ function A.AddonRequirements()
         {'Questie','Questie','Needed for full quest eligibility and zone conversion.'},
         {'QuestieDB','QuestieDB','Needed for full NPC, vendor and quest location data.'},
         {'SkillUpForever','SkillUp Forever','Used for profession ranks/books; optional for One Last Thing.'},
-        {'TrainerSpells','TrainerSpells','Class spells, weapon skills and profession trainer locations.'},
+        {'TrainerSpells','TrainerSpells','Class spells, portal trainers, weapon skills and profession trainer locations.'},
         {'NeavMedia','NeavMedia','Optional: Neav fonts. Game fonts work without it.'},
     }
     local rows={}
@@ -362,10 +362,10 @@ local function buildSettings()
         y=y+8
     end
     section('recovery','Hidden reminders & help',false)
-    text('Show hidden: skipped this visit or hidden for 30m.',11)
+    text('Show hidden: reminders skipped this visit.',11)
     text('Ignored reminders are managed separately below.',11)
     own(button(parent,'Show hidden reminders',8,-y,365,function()
-        A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',false);A.Print('Skipped and timed-hidden reminders are visible again. Ignored reminders and category choices stay unchanged.')
+        A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',false);A.Print('Skipped reminders are visible again. Ignored reminders and category choices stay unchanged.')
     end));y=y+34
     own(button(parent,'Ignored reminders',8,-y,365,function() A.ShowTrashBin() end));y=y+38
     text('/olt status — connection diagnostics',11)

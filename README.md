@@ -19,12 +19,12 @@ For updates through WowUp, use the **GitHub repository URL**, rather than a dire
 - `/olt` or `/onelastthing`: open the checklist.
 - `/olt settings`: configure categories, supplies, appearance and ignored reminders.
 - `/olt supply ITEM_ID AMOUNT`: set a custom supply amount; zero removes it.
-- `/olt restore`: show reminders skipped this visit or paused for 30 minutes.
+- `/olt restore`: show reminders skipped this visit.
 - `/olt status`: show data connections and compatibility diagnostics.
 
 Drag the header to move the window. Click it to collapse; pending work stays visible as a count. Once the enabled checks finish successfully and the list is clear, the header fades to **OLT**. Missing or failed checks show **Some checks unavailable**; expand the checklist for details. Scroll with the mouse wheel and resize the window by dragging its bottom corner. The − / + buttons adjust font size in 5% steps (80–130%), saved per character. Category and subcategory checkboxes are in **Filter** beside the header. Disabled groups remain available there; expand a category with + to manage its children. Small category labels share reminder title lines where space permits, and hovering reveals full details. Default, Compact and Minimal layouts are available, with built-in Arial Narrow and optional SharedMedia fonts.
 
-**Skip this visit** returns next visit/reload. **Hide for 30m** returns after 30 minutes. **Don't remind again**, under the row's menu, stays hidden until restored individually in Settings > Ignored reminders. Completed tasks clear their own map pins; a waypoint you set afterward is preserved.
+**Skip** returns next visit/reload. All districts within a capital share one visit. **Ignore** stays hidden until restored individually in Settings > Ignored reminders. Map, Skip and Ignore are directly available on rows in all three layouts; narrow and Minimal rows abbreviate Map/Skip to M/S. Completed tasks clear their own map pins; a waypoint you set afterward is preserved.
 
 ## Data addons
 
@@ -35,7 +35,7 @@ There are no hard addon dependencies. Coverage depends on the data providers ins
 | Attune | Unfinished quest chains, including class, dungeon and access chains |
 | Questie / QuestieDB | Quest prerequisites, NPC locations, vendors and repair locations |
 | SkillUp Forever | Profession state and rank/cap reminders; not changing recipe shopping lists |
-| TrainerSpells | Class spell ranks, trainer locations, weapon skills and profession rank-trainer locations |
+| TrainerSpells | Class spell ranks, city-specific Mage portal trainers, weapon skills and profession rank-trainer locations |
 | NeavMedia | Optional fonts/media |
 | LibSharedMedia-3.0 | Optional registered fonts, including embedded library copies |
 
@@ -80,7 +80,7 @@ New to GitHub? Start with [GITHUB-START.md](docs/GITHUB-START.md). This project 
 ```sh
 python3 -m pip install -r requirements-dev.txt
 python3 tests/test_addon.py
-python3 tools/package.py --version 0.14.7
+python3 tools/package.py --version 0.14.9
 ```
 
 The install ZIP is written to `dist/`. It contains the addon and readable changelog. Tests simulate WoW APIs; they do not replace testing in the game. For a bug report, include client language, location, `/olt status`, reproduction steps and any BugSack error.

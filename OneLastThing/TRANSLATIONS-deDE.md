@@ -56,6 +56,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Default | Standard |
 | Delete | Entfernen |
 | Disabled | Deaktiviert |
+| Districts within a capital count as one visit. | Alle Stadtviertel einer Hauptstadt zählen als ein Besuch. |
 | Distance unknown | Entfernung unbekannt |
 | Don’t remind again | Nicht mehr erinnern |
 | Drag to resize the window. | Ziehen, um die Fenstergröße zu ändern. |
@@ -229,3 +230,13 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | total | insgesamt |
 | utility unlock | Freischaltung |
 | yd | yd |
+
+## Direct row actions and Mage portal trainers
+
+| English | German |
+| --- | --- |
+| Skip | Diesmal nicht |
+| Ignore | Ignorieren |
+| Portal trainer | Portallehrer |
+| Portal-trainer data unavailable | Daten zu Portallehrern nicht verfügbar |
+| Do not remind again. Restore in Settings > Ignored reminders. | Nicht mehr erinnern. Unter Einstellungen > Ignorierte Hinweise wiederherstellen. |

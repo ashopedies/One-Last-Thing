@@ -75,7 +75,6 @@ end
 function A.ShowFilters(anchor)
     local m=A.filterMenu
     if m and m:IsShown() then A.CloseFilters();return end
-    if A.reminderMenu then A.reminderMenu:Hide() end
     if not m then
         m=CreateFrame('Frame','OneLastThingFilterMenu',UIParent,'BackdropTemplate');A.filterMenu=m
         m:SetSize(290,240);m:SetFrameStrata('DIALOG');m:SetClampedToScreen(true);m:EnableMouse(true)
