@@ -48,10 +48,48 @@ local function savePosition(f)
     local point,_,relativePoint,x,y=f:GetPoint(1)
     A.db.position={point=point,relativePoint=relativePoint,x=x,y=y}
 end
+function A.RowNavigable(row)
+    return row~=nil and ((row.map~=nil and row.x~=nil and row.y~=nil) or row.skill~=nil or row.attuneStep~=nil)
+end
+function A.StyleRow(w)
+    if not (w and w.row) then return end
+    local pinned=A.IsPinnedRow and A.IsPinnedRow(w.row) or false
+    w.oltPinned=pinned
+    if w.accent then
+        local r,g,b=A.ToneColor(pinned and 'action' or A.RowTone(w.row))
+        w.accent:SetWidth(pinned and 3 or 2)
+        w.accent:SetColorTexture(r,g,b,pinned and .95 or .68)
+    end
+    if w.hoverBg then
+        if w.hovered then
+            local r,g,b=A.ToneColor(pinned and 'action' or 'text')
+            w.hoverBg:SetColorTexture(r,g,b,.11)
+        elseif pinned then
+            local r,g,b=A.ToneColor('action')
+            w.hoverBg:SetColorTexture(r,g,b,.07)
+        else
+            w.hoverBg:SetColorTexture(0,0,0,0)
+        end
+    end
+    if A.ApplyBorder then A.ApplyBorder(w) end
+end
+function A.UpdateRowPinStates()
+    local f=A.frame;if not f or not f.widgets then return end
+    local content=f:GetWidth()-32
+    for _,w in ipairs(f.widgets) do
+        if w.row then
+            A.StyleRow(w)
+            if not A.db.collapsed then A.LayoutActions(w,content) end
+        end
+    end
+end
 function A.LayoutActions(w,width)
     if not w.go then return end
     local minimal=A.db.rowMode=='minimal'
-    local controls={{w.go,'Map','M',44},{w.dismiss,'Skip this visit','S',108},{w.snooze,'Hide for 30m','30m',98},{w.more,'...','...',26}}
+    local pinned=A.IsPinnedRow and A.IsPinnedRow(w.row)
+    local mapLabel=pinned and 'Map •' or 'Map'
+    local mapShort=pinned and 'M•' or 'M'
+    local controls={{w.go,mapLabel,mapShort,44},{w.dismiss,'Skip this visit','S',108},{w.snooze,'Hide for 30m','30m',98},{w.more,'...','...',26}}
     local needed=16
     for _,c in ipairs(controls) do if c[1]:IsShown() then
         A.SetText(c[1],c[2]);local fs=c[1]:GetFontString()
@@ -110,16 +148,20 @@ local function make()
     f:SetMovable(true);f:SetClampedToScreen(true);f:EnableMouse(true);f:RegisterForDrag('LeftButton')
     f:SetResizable(true);f:SetResizeBounds(360,230,950,850);f:SetScale(A.db.scale)
     if A.db.position then local p=A.db.position;f:ClearAllPoints();f:SetPoint(p.point,UIParent,p.relativePoint,p.x,p.y) end
-    f:SetScript('OnDragStart',f.StartMoving)
-    f:SetScript('OnDragStop',function(self) self:StopMovingOrSizing();savePosition(self) end)
+    f:SetScript('OnDragStart',function(self) if not A.db.locked and not InCombatLockdown() then self:StartMoving() end end)
+    f:SetScript('OnDragStop',function(self) if A.db.locked then return end;self:StopMovingOrSizing();savePosition(self) end)
     f.title=f:CreateFontString(nil,'OVERLAY','GameFontNormalLarge');f.title:SetPoint('TOPLEFT',14,-11);f.title:SetJustifyH('LEFT');A.Font(f.title,15,false,'brand')
     f.header=CreateFrame('Button',nil,f);f.header:RegisterForClicks('LeftButtonUp');f.header:RegisterForDrag('LeftButton')
     f.header:SetScript('OnClick',function(self)
         if self.wasDragged then self.wasDragged=false;return end
         A.SetCollapsed(not A.db.collapsed,'manual')
     end)
-    f.header:SetScript('OnDragStart',function(self) self.wasDragged=true;f:StartMoving() end)
+    f.header:SetScript('OnDragStart',function(self)
+        if A.db.locked or InCombatLockdown() then return end
+        self.wasDragged=true;f:StartMoving()
+    end)
     f.header:SetScript('OnDragStop',function(self)
+        if A.db.locked then self.wasDragged=false;return end
         f:StopMovingOrSizing();savePosition(f)
         C_Timer.After(0,function() self.wasDragged=false end)
     end)
@@ -150,14 +192,15 @@ local function make()
     f.larger=button(f,'+',23,function() A.AdjustFontSize(5) end);f.larger:SetPoint('LEFT',f.smaller,'RIGHT',3,0)
     hint(f.smaller,'Decrease font size');hint(f.larger,'Increase font size')
     f.grip=button(f,'/',22,function() end);f.grip:SetPoint('BOTTOMRIGHT',-6,6)
-    f.grip:SetScript('OnMouseDown',function(_,which) if which=='LeftButton' and not InCombatLockdown() then f:StartSizing('BOTTOMRIGHT') end end)
-    f.grip:SetScript('OnMouseUp',function() f:StopMovingOrSizing();A.db.size={width=f:GetWidth(),height=f:GetHeight()};savePosition(f) end)
+    f.grip:SetScript('OnMouseDown',function(_,which) if which=='LeftButton' and not A.db.locked and not InCombatLockdown() then f:StartSizing('BOTTOMRIGHT') end end)
+    f.grip:SetScript('OnMouseUp',function() if A.db.locked then return end;f:StopMovingOrSizing();A.db.size={width=f:GetWidth(),height=f:GetHeight()};savePosition(f) end)
     hint(f.grip,'Drag to resize the window.')
     hint(check,'Refresh the checklist for your current location. Does not restore hidden reminders, purchase items or learn spells.')
     hint(restore,'Show reminders skipped this visit or hidden for 30 minutes. Ignored reminders and disabled categories stay hidden.')
     f:SetScript('OnHide',function()
         A.pendingDraw=nil;f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil)
         f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
+        for _,w in ipairs(f.widgets or {}) do if w.hovered then w.hovered=false;A.StyleRow(w) end end
         if A.reminderMenu then A.reminderMenu:Hide() end;if A.filterMenu then A.filterMenu:Hide() end
     end)
     f.restoreButton=restore
@@ -318,23 +361,50 @@ function A.Draw(rows,reason,force)
                     local w=f.rowPool[rowIndex]
                     if not w then
                         w=CreateFrame('Frame',nil,f.content,'BackdropTemplate');w:SetHeight(91);A.Panel(w)
-                        w.title=w:CreateFontString(nil,'OVERLAY','GameFontNormal');w.title:SetPoint('TOPLEFT',9,-8);w.title:SetHeight(16);w.title:SetJustifyH('LEFT');A.Font(w.title,12)
+                        w.hoverBg=w:CreateTexture(nil,'BACKGROUND');w.hoverBg:SetAllPoints();w.hoverBg:SetColorTexture(0,0,0,0)
+                        w.accent=w:CreateTexture(nil,'OVERLAY');w.accent:SetPoint('TOPLEFT',0,-2);w.accent:SetPoint('BOTTOMLEFT',0,2);w.accent:SetWidth(2)
+                        w.title=w:CreateFontString(nil,'OVERLAY','GameFontNormal');w.title:SetPoint('TOPLEFT',10,-8);w.title:SetHeight(16);w.title:SetJustifyH('LEFT');A.Font(w.title,12)
                         w.tag=w:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');w.tag:SetJustifyH('RIGHT');w.tag:SetHeight(16);A.Font(w.tag,10,true)
-                        w.detail=w:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');w.detail:SetPoint('TOPLEFT',9,-27);w.detail:SetHeight(28);w.detail:SetJustifyH('LEFT');A.Font(w.detail,10,true)
+                        w.detail=w:CreateFontString(nil,'OVERLAY','GameFontHighlightSmall');w.detail:SetPoint('TOPLEFT',10,-27);w.detail:SetHeight(28);w.detail:SetJustifyH('LEFT');A.Font(w.detail,10,true)
                         w:EnableMouse(true);w:RegisterForDrag('LeftButton')
-                        w:SetScript('OnDragStart',function() f:StartMoving() end)
-                        w:SetScript('OnDragStop',function() f:StopMovingOrSizing();savePosition(f) end)
+                        w:SetScript('OnDragStart',function(self)
+                            local target=self or w
+                            if A.db.locked or InCombatLockdown() then return end
+                            target.wasDragged=true;f:StartMoving()
+                        end)
+                        w:SetScript('OnDragStop',function(self)
+                            local target=self or w
+                            if A.db.locked then target.wasDragged=false;return end
+                            f:StopMovingOrSizing();savePosition(f)
+                            C_Timer.After(0,function() target.wasDragged=false end)
+                        end)
+                        w:SetScript('OnMouseUp',function(self,which)
+                            local target=self or w
+                            if not target.row then return end
+                            if which=='RightButton' then
+                                if GameTooltip then GameTooltip:Hide() end
+                                A.ShowReminderMenu(target.more or target,target.row)
+                            elseif which=='LeftButton' and not target.wasDragged and A.db.rowMode=='minimal' and A.RowNavigable(target.row) then
+                                A.Navigate(target.row)
+                            end
+                        end)
                         w:SetScript('OnEnter',function(self)
-                            if self.row and GameTooltip then
-                                GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
-                                A.SetText(GameTooltip,A.DisplayTitle(self.row))
-                                GameTooltip:AddLine(A.Translate(self.row.categoryName or '')..' · '..A.Translate(self.row.subcategoryName or ''),1,1,1,true)
-                                GameTooltip:AddLine(A.DistanceText(self.row),1,1,1,true)
-                                GameTooltip:AddLine(A.Translate(A.DisplayDetail(self.row,true)),1,1,1,true)
+                            local target=self or w
+                            target.hovered=true;A.StyleRow(target)
+                            if target.row and GameTooltip then
+                                GameTooltip:SetOwner(target,'ANCHOR_RIGHT')
+                                A.SetText(GameTooltip,A.DisplayTitle(target.row))
+                                GameTooltip:AddLine(A.Translate(target.row.categoryName or '')..' · '..A.Translate(target.row.subcategoryName or ''),1,1,1,true)
+                                GameTooltip:AddLine(A.DistanceText(target.row),1,1,1,true)
+                                GameTooltip:AddLine(A.Translate(A.DisplayDetail(target.row,true)),1,1,1,true)
                                 GameTooltip:Show()
                             end
                         end)
-                        w:SetScript('OnLeave',function() if GameTooltip then GameTooltip:Hide() end end)
+                        w:SetScript('OnLeave',function(self)
+                            local target=self or w
+                            target.hovered=false;A.StyleRow(target)
+                            if GameTooltip then GameTooltip:Hide() end
+                        end)
                         w.go=button(w,'Map',44,function() A.Navigate(w.row) end);w.go:SetPoint('BOTTOMLEFT',8,7)
                         w.dismiss=button(w,'Skip this visit',108,function() A.Dismiss(w.row) end);w.dismiss:SetPoint('LEFT',w.go,'RIGHT',4,0)
                         w.snooze=button(w,'Hide for 30m',98,function() A.Snooze(w.row) end);w.snooze:SetPoint('LEFT',w.dismiss,'RIGHT',4,0)
@@ -345,11 +415,11 @@ function A.Draw(rows,reason,force)
                         f.rowPool[rowIndex]=w
                     end
                     A.SetText(w.dismiss,'Skip this visit');A.SetText(w.snooze,'Hide for 30m')
-                    w.row=row;w:ClearAllPoints();w:SetPoint('TOPLEFT',0,-y)
+                    w.row=row;w.hovered=false;w.wasDragged=false;w:ClearAllPoints();w:SetPoint('TOPLEFT',0,-y)
                     local compact=A.db.rowMode~='default'
                     local minimal=A.db.rowMode=='minimal'
                     w:SetHeight(minimal and 27 or (compact and 51 or 91));y=y+(minimal and 31 or (compact and 55 or 97))
-                    w.title:ClearAllPoints();w.title:SetPoint('TOPLEFT',compact and 8 or 9,compact and -5 or -8)
+                    w.title:ClearAllPoints();w.title:SetPoint('TOPLEFT',compact and 9 or 10,compact and -5 or -8)
                     w.title:SetHeight(16)
                     w.tag:ClearAllPoints();w.tag:SetPoint('TOPRIGHT',-9,compact and -5 or -8)
                     w.categoryLabel=A.shortCategoryNames[row.category] or row.categoryName or '';A.Tint(w.tag,row.category)
@@ -357,7 +427,8 @@ function A.Draw(rows,reason,force)
                     A.SetText(w.title,A.DisplayTitle(row));A.SetText(w.detail,A.DisplayDetail(row))
                     A.Tint(w.title,A.RowTone(row));A.Tint(w.go:GetFontString(),'action')
                     A.Tint(w.dismiss:GetFontString(),'dismiss');A.Tint(w.snooze:GetFontString(),'snooze');A.Tint(w.more:GetFontString(),'muted')
-                    w.go:SetShown(not minimal and ((row.map~=nil and row.x~=nil and row.y~=nil) or row.skill~=nil or row.attuneStep~=nil))
+                    A.StyleRow(w)
+                    w.go:SetShown(not minimal and A.RowNavigable(row))
                     w.dismiss:SetShown(not minimal);w.snooze:SetShown(not minimal);w.more:Show()
                     local left=8
                     for _,control in ipairs({w.go,w.dismiss,w.snooze,w.more}) do

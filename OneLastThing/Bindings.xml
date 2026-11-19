@@ -1,0 +1,8 @@
+<Bindings>
+    <Binding name="ONELASTTHING_TOGGLE" header="ONELASTTHING">
+        if OneLastThing and OneLastThing.TogglePopup then OneLastThing.TogglePopup() end
+    </Binding>
+    <Binding name="ONELASTTHING_SETTINGS">
+        if OneLastThing and OneLastThing.ToggleSettings then OneLastThing.ToggleSettings() end
+    </Binding>
+</Bindings>

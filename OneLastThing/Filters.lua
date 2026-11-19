@@ -66,7 +66,7 @@ function A.UpdateFilters()
         if expanded then
             local subs={};for sub in pairs(cat.subs) do subs[#subs+1]=sub end
             table.sort(subs,function(a,b) return A.Translate(cat.subs[a])<A.Translate(cat.subs[b]) end)
-            for _,sub in ipairs(subs) do entry(cat.id,sub,cat.subs[sub]) end
+            for _,sub in ipairs(subs) do if sub~='petmood' or (A.IsHunter and A.IsHunter()) then entry(cat.id,sub,cat.subs[sub]) end end
         end
     end
     m.content:SetHeight(math.max(1,y));m:SetHeight(math.min(340,y+48))

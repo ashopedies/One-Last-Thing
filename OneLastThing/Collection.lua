@@ -1,10 +1,13 @@
 local _,A=...
 local definitions={
  AttuneRows={category='quests',label='Quest chains'},TurnInRows={category='quests',sub='turnins',label='Quest turn-ins'},
+ BagQuestItemRows={category='quests',sub='bagquests',label='Quest items in bags'},
  ImportantVendorRows={category='professions',label='Profession books'},ProfessionRows={category='professions',label='Profession ranks'},
  SupplyRows={category='supplies',label='Supplies'},HunterAmmoRows={category='supplies',sub='ammo',label='Hunter ammunition'},
  RepairRows={category='errands',sub='repairs',label='Repairs'},ClassSpellRows={category='training',sub='class',label='Class spells'},
- WeaponRows={category='training',sub='weapons',label='Weapon skills'},FlightRows={category='errands',sub='flights',label='Flight paths'},
+ WeaponRows={category='training',sub='weapons',label='Weapon skills'},TalentRows={category='training',sub='talents',label='Unspent talent points'},
+ FlightRows={category='errands',sub='flights',label='Flight paths'},HearthstoneRows={category='errands',sub='hearthstone',label='Hearthstone'},
+ PetMoodRows={category='errands',sub='petmood',label='Hunter pet mood'},
  TrainerRows={category='training',label='Observed training'},BagRows={category='errands',sub='bags',label='Bag space'},
 }
 local cached={AttuneRows=true,TurnInRows=true,ClassSpellRows=true,WeaponRows=true,FlightRows=true}
@@ -23,7 +26,8 @@ function A.InvalidateForEvent(event)
       UPDATE_INVENTORY_DURABILITY={},MERCHANT_UPDATE={},MERCHANT_SHOW={},MERCHANT_CLOSED={},
       TRAINER_UPDATE={'ClassSpellRows','WeaponRows'},TRAINER_SHOW={'ClassSpellRows','WeaponRows'},
       GET_ITEM_INFO_RECEIVED={'AttuneRows'},ITEM_DATA_LOAD_RESULT={'AttuneRows'},
-      UNIT_SPELLCAST_SENT={},UNIT_PET={},PET_UI_UPDATE={},PET_BAR_UPDATE={},PLAYER_EQUIPMENT_CHANGED={},
+      UNIT_SPELLCAST_SENT={},UNIT_PET={},PET_UI_UPDATE={},PET_BAR_UPDATE={},UNIT_HAPPINESS={},
+      CHARACTER_POINTS_CHANGED={},PLAYER_TALENT_UPDATE={},PLAYER_EQUIPMENT_CHANGED={},
     }
     A.InvalidateProviders(affected[event])
 end
@@ -31,7 +35,7 @@ function A.ProviderEnabled(name)
     local d=definitions[name]
     if A.db.sources[name]==false or (d and not A.CategoryEnabled(d.category,d.sub)) then return false end
     if name=='ImportantVendorRows' and A.db.importantVendorBuys==false then return false end
-    if name=='HunterAmmoRows' and not A.IsHunter() then return false end
+    if (name=='HunterAmmoRows' or name=='PetMoodRows') and not A.IsHunter() then return false end
     return true
 end
 local function readiness(name)

@@ -30,7 +30,7 @@ local de={
  ["Repair-vendor data unavailable"]="Reparaturhändlerdaten nicht verfügbar",
  ["Check unavailable"]="Prüfung nicht verfügbar",["Check failed; try again"]="Prüfung fehlgeschlagen; erneut versuchen",
 
- ["Map"]="Karte",["Skip this visit"]="Diesmal nicht",["Hide for 30m"]="30 Min. Pause",
+ ["Map"]="Karte",["Map •"]="Karte •",["Skip this visit"]="Diesmal nicht",["Hide for 30m"]="30 Min. Pause",
  ["Don’t remind again"]="Nicht mehr erinnern",["Show hidden reminders"]="Wieder anzeigen",
  ["Ignored reminders"]="Ignorierte Hinweise",["Remind me again"]="Wieder erinnern",
  ["Cancel"]="Abbrechen",["Settings"]="Einstellungen",["Check"]="Jetzt prüfen",
@@ -69,7 +69,7 @@ local de={
  ["Supplies"]="Vorräte",["Ankhs"]="Ankhs",["Class supplies"]="Klassenreagenzien",
  ["Custom supplies"]="Zusätzliche Gegenstände",["Target"]="Sollbestand",["Add"]="Hinzufügen",["Delete"]="Entfernen",
  ["Targets save on Enter or when leaving the field."]="Der Sollbestand wird mit Enter oder beim Verlassen des Felds gespeichert.",
- ["Add item ID                           Target"]="Gegenstands-ID                       Sollbestand",
+ ["Add item ID"]="Gegenstands-ID",
  ["Enter an item ID and target from 1 to 10000."]="Gegenstands-ID und Sollbestand von 1 bis 10000 eingeben.",
  ["I have Reagent Economy (hide class reagent checks)"]="Ich habe „Reagent Economy“ (Klassenreagenzien ausblenden)",
  ["Disabled"]="Deaktiviert",["Stocked"]="Ausreichend vorhanden",["Reagent Economy enabled"]="Reagent Economy aktiviert",
@@ -135,6 +135,21 @@ local de={
  ["No ammo upgrade suggestions; you choose the tier."]="Keine automatischen Munitions-Upgrades; du bestimmst die Sorte.",
  ["Managed in Custom supplies"]="Unter „Zusätzliche Gegenstände“ verwaltet",
  ["Arrow"]="Pfeile",["Bullet"]="Kugeln",
+ ["Window & layout"]="Fenster & Ansicht",["Theme & style"]="Farbschema & Stil",["Text"]="Text",
+ ["Lock window position"]="Fensterposition sperren",["Show borders"]="Rahmen anzeigen",
+ ["Assign hotkeys in Game Menu > Key Bindings > One Last Thing."]="Tastenkürzel unter Spielmenü > Tastaturbelegung > One Last Thing festlegen.",
+ ["Optional integrations below unlock extra reminders. Missing providers appear in the checklist."]="Optionale Addons schalten weitere Hinweise frei. Fehlende Datenquellen stehen in der Liste.",
+ ["Toggle / check checklist"]="Liste umschalten / prüfen",["Open settings"]="Einstellungen öffnen",
+ ["Quest items in bags"]="Questgegenstände in Taschen",
+ ["Right-click this item in your bags to accept the quest."]="Klicke diesen Gegenstand in deinen Taschen mit Rechtsklick an, um die Quest anzunehmen.",
+ ["Unspent talent points"]="Freie Talentpunkte",["Unspent talent point (1)"]="Freier Talentpunkt (1)",
+ ["Open your Talents window to spend available points."]="Öffne das Talentfenster, um verfügbare Punkte zu verteilen.",
+ ["Hearthstone"]="Ruhestein",["Hearthstone is in your bank"]="Ruhestein liegt in der Bank",
+ ["Take your Hearthstone out of the bank before travelling."]="Nimm deinen Ruhestein vor der Reise aus der Bank.",
+ ["Hearthstone missing from bags"]="Ruhestein fehlt in den Taschen",
+ ["Speak to an innkeeper to get a replacement Hearthstone."]="Sprich mit einem Gastwirt, um einen neuen Ruhestein zu erhalten.",
+ ["Hunter pet mood"]="Begleiterstimmung",["Hunter pet is unhappy"]="Begleiter ist unglücklich",
+ ["Feed your pet before travelling (75% damage; risk of running away)."]="Füttere deinen Begleiter vor der Reise (75 % Schaden; Gefahr wegzulaufen).",
 }
 A.deDE=de
 function A.IsGerman() return GetLocale and GetLocale()=="deDE" end
@@ -204,6 +219,9 @@ local patterns={
  {"^Version (.-); map (.+)$",function(v,m) return "Version "..v.."; Karte "..m end},
  {"^Compatibility issue %[(.-)%]: (.+)$",function(k,v) return "Kompatibilitätsproblem ["..k.."]: "..v end},
  {"^Automatic popups: (.+)$",function(t) return "Automatische Hinweise: "..(t=="true" and "ein" or (t=="false" and "aus" or t)) end},
+ {"^Start quest from bag: (.+)$",function(t) return "Quest im Inventar starten: "..A.Translate(t) end},
+ {"^Unspent talent points %((%d+)%)$",function(n) return "Freie Talentpunkte ("..n..")" end},
+ {"^Current bind location: (.+)$",function(t) return "Aktueller Heimatort: "..t end},
 }
 function A.Translate(text)
     if not A.IsGerman() or type(text)~="string" then return text end

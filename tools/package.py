@@ -34,7 +34,7 @@ def build(version, source=False, output=None):
     # No downloaded addons, game account files, historical archives or machine paths.
     files = []
     for path in sorted((ROOT/'OneLastThing').iterdir()):
-        if path.is_file() and path.suffix in {'.lua', '.toc', '.md', '.txt'}:
+        if path.is_file() and path.suffix in {'.lua', '.toc', '.xml', '.md', '.txt'}:
             files.append((path, path.relative_to(ROOT).as_posix()))
     if source:
         for folder in ['tests', 'tools', 'docs', '.github']:

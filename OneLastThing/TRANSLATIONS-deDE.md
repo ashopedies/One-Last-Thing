@@ -9,7 +9,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | /olt status — connection diagnostics | /olt status – Verbindungen prüfen |
 | /olt status — data and compatibility diagnostics | /olt status – Daten und Kompatibilität prüfen |
 | Add | Hinzufügen |
-| Add item ID                           Target | Gegenstands-ID                       Sollbestand |
+| Add item ID | Gegenstands-ID |
 | Addon requirements | Benötigte Addons |
 | Alchemy | Alchemie |
 | Already learned | Bereits gelernt |
@@ -17,6 +17,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Appearance | Darstellung |
 | Arial Narrow (built in) | Arial Narrow (integriert) |
 | Arrow | Pfeile |
+| Assign hotkeys in Game Menu > Key Bindings > One Last Thing. | Tastenkürzel unter Spielmenü > Tastaturbelegung > One Last Thing festlegen. |
 | Attune chain | Attune-Questreihe |
 | Attune chain; availability not verified | Attune-Questreihe; Verfügbarkeit nicht bestätigt |
 | Attune character data unavailable | Attune-Charakterdaten nicht verfügbar |
@@ -66,6 +67,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Enter an item ID and target from 1 to 10000. | Gegenstands-ID und Sollbestand von 1 bis 10000 eingeben. |
 | Equip the ammo you want to restock. | Rüste die Munition aus, die du nachkaufen möchtest. |
 | Errands | Erledigungen |
+| Feed your pet before travelling (75% damage; risk of running away). | Füttere deinen Begleiter vor der Reise (75 % Schaden; Gefahr wegzulaufen). |
 | Filter | Filter |
 | Filter • | Filter • |
 | First Aid | Erste Hilfe |
@@ -80,12 +82,17 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | General & location | Allgemein & Standort |
 | Grey quest — lowest priority | Graue Quest – niedrigste Priorität |
 | Header position | Kopfzeile |
+| Hearthstone | Ruhestein |
+| Hearthstone is in your bank | Ruhestein liegt in der Bank |
+| Hearthstone missing from bags | Ruhestein fehlt in den Taschen |
 | Herbalism | Kräuterkunde |
 | Hidden for 30 minutes, even if you change zones. Show hidden reminders brings it back sooner. | Für 30 Minuten ausblenden, auch bei einem Ortswechsel. Mit „Wieder anzeigen“ auch früher. |
 | Hidden for 30m — re-enable to show | 30 Min. pausiert – zum Anzeigen wieder aktivieren |
 | Hidden reminders & help | Ausgeblendete Hinweise & Hilfe |
 | Hide for 30m | 30 Min. Pause |
 | Hunter ammunition | Jägermunition |
+| Hunter pet is unhappy | Begleiter ist unglücklich |
+| Hunter pet mood | Begleiterstimmung |
 | I have Reagent Economy (hide class reagent checks) | Ich habe „Reagent Economy“ (Klassenreagenzien ausblenden) |
 | Ignored reminders | Ignorierte Hinweise |
 | Ignored reminders are managed separately below. | Ignorierte Hinweise werden getrennt verwaltet. |
@@ -97,9 +104,11 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Leatherworking | Lederverarbeitung |
 | Loaded | Geladen |
 | Local reminders | Hinweise in der Nähe |
+| Lock window position | Fensterposition sperren |
 | Manage in Settings > Ignored reminders | Verwalten: Einstellungen > Ignorierte Hinweise |
 | Managed in Custom supplies | Unter „Zusätzliche Gegenstände“ verwaltet |
 | Map | Karte |
+| Map • | Karte • |
 | Merchant | Händler |
 | Minimal | Minimal |
 | Mining | Bergbau |
@@ -127,9 +136,12 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | One Last Thing · All done, yay! | One Last Thing · Alles erledigt, juhu! |
 | One Last Thing · Some checks unavailable | One Last Thing · Prüfungen unvollständig |
 | Only show nearby tasks in my current locality | Nur nahe Aufgaben am aktuellen Ort anzeigen |
+| Open settings | Einstellungen öffnen |
 | Open settings after combat. | Einstellungen nach dem Kampf öffnen. |
 | Open when entering a new zone | Bei Ankunft an einem neuen Ort anzeigen |
+| Open your Talents window to spend available points. | Öffne das Talentfenster, um verfügbare Punkte zu verteilen. |
 | Optional font library, often bundled by another addon. | Optionale Schriftbibliothek, oft in anderen Addons enthalten. |
+| Optional integrations below unlock extra reminders. Missing providers appear in the checklist. | Optionale Addons schalten weitere Hinweise frei. Fehlende Datenquellen stehen in der Liste. |
 | Optional: Neav fonts. Game fonts work without it. | Optional: Neav-Schriften. Spielschriften funktionieren ohne dieses Addon. |
 | Other completed quests | Weitere abgabebereite Quests |
 | Other hidden reminder | Weiterer ausgeblendeter Hinweis |
@@ -149,6 +161,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Quest currently in your log | Quest ist im Questlog |
 | Quest eligibility/location data incomplete | Questvoraussetzungen und Orte unvollständig |
 | Quest giver | Questgeber |
+| Quest items in bags | Questgegenstände in Taschen |
 | Quest turn-in data unavailable | Questabgabe-Daten nicht verfügbar |
 | Quest turn-ins | Questabgaben |
 | Quests | Quests |
@@ -166,12 +179,14 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Requirements not verified; check availability at the trainer. | Voraussetzungen ungeprüft; Verfügbarkeit beim Lehrer prüfen. |
 | Reset popup size & position | Fenstergröße und Position zurücksetzen |
 | Returns on your next visit to this locality, or after reloading. Show hidden reminders brings it back sooner. | Beim nächsten Besuch an diesem Ort oder nach /reload wieder sichtbar. Mit „Wieder anzeigen“ auch früher. |
+| Right-click this item in your bags to accept the quest. | Klicke diesen Gegenstand in deinen Taschen mit Rechtsklick an, um die Quest anzunehmen. |
 | Scan all unfinished Attune quest chains | Alle offenen Attune-Questreihen berücksichtigen |
 | Selected ammo has no known vendor | Für diese Munition ist kein Händler bekannt. |
 | Sell, bank or mail items before a long trip. | Vor einer längeren Reise Gegenstände verkaufen, einlagern oder verschicken. |
 | Seller location unavailable; check this item’s sources. | Händlerposition unbekannt; prüfe die Bezugsquellen des Gegenstands. |
 | Settings | Einstellungen |
 | Show an empty popup when nothing is pending | Auch anzeigen, wenn nichts ansteht |
+| Show borders | Rahmen anzeigen |
 | Show categories | Anzeigen |
 | Show hidden reminders | Wieder anzeigen |
 | Show hidden: skipped this visit or hidden for 30m. | „Wieder anzeigen“: übersprungene und pausierte Hinweise. |
@@ -184,21 +199,26 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Skipped this visit — re-enable to show | Diesmal übersprungen – zum Anzeigen wieder aktivieren |
 | Soft | Dezent |
 | Some checks unavailable | Einige Prüfungen nicht verfügbar |
+| Speak to an innkeeper to get a replacement Hearthstone. | Sprich mit einem Gastwirt, um einen neuen Ruhestein zu erhalten. |
 | Spell not learned / older rank | Fähigkeit nicht gelernt oder älterer Rang |
 | Spell trainer | Klassenlehrer |
 | Stocked | Ausreichend vorhanden |
 | Strong | Stark |
 | Supplies | Vorräte |
 | Tailoring | Schneiderei |
+| Take your Hearthstone out of the bank before travelling. | Nimm deinen Ruhestein vor der Reise aus der Bank. |
 | Target | Sollbestand |
 | Targets save on Enter or when leaving the field. | Der Sollbestand wird mit Enter oder beim Verlassen des Felds gespeichert. |
+| Text | Text |
 | Text outline | Textkontur |
 | Text shadow | Textschatten |
 | The game marks this flight path undiscovered. Speak to its flight master. | Dieser Flugpunkt ist laut Spiel noch unbekannt. Sprich mit dem Flugmeister. |
 | The six capital cities use city-wide reminders. | In den sechs Hauptstädten gelten Hinweise stadtweit. |
+| Theme & style | Farbschema & Stil |
 | These integrations enable the features listed below. | Diese Addons ermöglichen die unten genannten Funktionen. |
 | Thick | Dick |
 | Thin | Dünn |
+| Toggle / check checklist | Liste umschalten / prüfen |
 | Top | Oben |
 | Train next profession rank | Nächste Berufsstufe lernen |
 | Trainer | Lehrer |
@@ -214,6 +234,8 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Unknown location | Unbekannter Ort |
 | Unlearned — affordable now | Nicht gelernt – jetzt bezahlbar |
 | Unlearned — train whenever you choose | Nicht gelernt – lernen, wann du möchtest |
+| Unspent talent point (1) | Freier Talentpunkt (1) |
+| Unspent talent points | Freie Talentpunkte |
 | Untick a group to hide it. | Gruppen zum Ausblenden abwählen. |
 | Use /olt supply ITEM_ID TARGET (0 removes it). | Mit /olt supply GEGENSTANDS_ID SOLLBESTAND festlegen (0 entfernt den Eintrag). |
 | Use Filter to re-enable a group. | Über Filter kannst du Gruppen wieder aktivieren. |
@@ -224,6 +246,7 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Warn below free bag slots | Warnen bei weniger freien Taschenplätzen als |
 | Weapon master | Waffenmeister |
 | Weapon skills | Waffenfertigkeiten |
+| Window & layout | Fenster & Ansicht |
 | [Check] | [Prüfen] |
 | price unknown | Preis unbekannt |
 | raid access | Schlachtzugzugang |

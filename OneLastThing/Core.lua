@@ -48,6 +48,8 @@ function A.Init()
     d.sources.NoteRows=nil
     if d.opacity==nil then d.opacity=0 end
     d.borders=nil
+    if d.showBorders==nil then d.showBorders=false end
+    if d.locked==nil then d.locked=false end
     d.theme=d.theme or 'blizzard'
     d.headerPosition=d.headerPosition or 'top'
     d.completionDelay=d.completionDelay or 10
@@ -98,6 +100,7 @@ function A.Init()
     if d.bagSlots == nil then d.bagSlots = 4 end
     A.providerHealth={};if A.InvalidateProviders then A.InvalidateProviders() end
     if A.ApplyTheme then A.ApplyTheme() end
+    if A.ApplyBindingLabels then A.ApplyBindingLabels() end
 end
 function A.Map()
     return C_Map and A.Safe('current map', C_Map.GetBestMapForUnit, 'player')
@@ -168,7 +171,7 @@ function A.Collect(map, travel, useCache)
     if not useCache and A.InvalidateProviders then A.InvalidateProviders() end
     A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.worldCoordCache={};A.collecting=true
     if A.SyncClassSupplies then A.SyncClassSupplies() end
-    for _, name in ipairs({'AttuneRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
+    for _, name in ipairs({'AttuneRows','TurnInRows','BagQuestItemRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','TalentRows','FlightRows','HearthstoneRows','PetMoodRows','TrainerRows','BagRows'}) do
         if A.RunProvider then A.RunProvider(name,out,map,travel,useCache)
         elseif A.db.sources[name]~=false then A.Safe(name, A[name], out, map, travel) end
     end
@@ -300,6 +303,92 @@ function A.BagRows(out, map, travel)
         A.Add(out, {key='bags', title='Only '..free..' general bag slots free', detail='Sell, bank or mail items before a long trip.', priority=40})
     end
 end
+function A.BagQuestItemRows(out)
+    local numSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+    local questInfo = (C_Container and C_Container.GetContainerItemQuestInfo) or GetContainerItemQuestInfo
+    if type(numSlots)~='function' or type(questInfo)~='function' then return end
+    for bag=0,4 do
+        local slots = A.Safe('bag slot count', numSlots, bag) or 0
+        for slot=1,slots do
+            local a,b,c = A.Safe('bag quest item', questInfo, bag, slot)
+            local questID,isActive
+            if type(a)=='table' then questID,isActive=a.questID,a.isActive
+            else questID,isActive=b,c end
+            if type(questID)=='number' and questID>0 and not isActive and not A.QuestActive(questID) and not A.QuestDone(questID) then
+                local name
+                local itemInfo = C_Container and C_Container.GetContainerItemInfo and A.Safe('bag quest item info', C_Container.GetContainerItemInfo, bag, slot)
+                if type(itemInfo)=='table' then
+                    name = itemInfo.itemName or (itemInfo.itemID and A.ItemName(itemInfo.itemID))
+                else
+                    local idFn = (C_Container and C_Container.GetContainerItemID) or GetContainerItemID
+                    local itemID = idFn and A.Safe('bag quest item ID', idFn, bag, slot)
+                    if itemID then name = A.ItemName(itemID) end
+                end
+                A.Add(out, {key='bagquest:'..questID, quest=questID, bagQuest=true,
+                    title='Start quest from bag: '..(name or ('Quest '..questID)),
+                    detail='Right-click this item in your bags to accept the quest.', priority=18})
+            end
+        end
+    end
+end
+function A.TalentRows(out)
+    local points = (UnitCharacterPoints and A.Safe('unspent talent points', UnitCharacterPoints, 'player'))
+        or (GetUnspentTalentPoints and A.Safe('unspent talent points', GetUnspentTalentPoints)) or 0
+    if type(points)=='number' and points>0 then
+        A.Add(out, {key='talents', talents=true,
+            title=points==1 and 'Unspent talent point (1)' or ('Unspent talent points ('..points..')'),
+            detail='Open your Talents window to spend available points.', priority=22})
+    end
+end
+function A.HearthstoneRows(out)
+    local numSlots = (C_Container and C_Container.GetContainerNumSlots) or GetContainerNumSlots
+    local countFn = (C_Item and C_Item.GetItemCount) or GetItemCount
+    if type(numSlots)~='function' or type(countFn)~='function' then return end
+    local backpack = A.Safe('backpack slots', numSlots, 0) or 0
+    if backpack<=0 then return end
+    if (A.Safe('hearthstone bag count', countFn, 6948, false, false) or 0)>0 then return end
+    local total = A.Safe('hearthstone bank count', countFn, 6948, true, false) or 0
+    local bind = GetBindLocation and A.Safe('hearthstone bind location', GetBindLocation)
+    local bindNote = (type(bind)=='string' and bind~='') and ('\nCurrent bind location: '..bind) or ''
+    if total>0 then
+        A.Add(out, {key='hearthstone', hearthstone=true, inventoryWarning=true,
+            title='Hearthstone is in your bank',
+            detail='Take your Hearthstone out of the bank before travelling.'..bindNote, priority=16})
+    else
+        A.Add(out, {key='hearthstone', hearthstone=true, inventoryWarning=true,
+            title='Hearthstone missing from bags',
+            detail='Speak to an innkeeper to get a replacement Hearthstone.'..bindNote, priority=16})
+    end
+end
+function A.PetMoodRows(out)
+    if not (A.IsHunter and A.IsHunter()) then return end
+    if type(GetPetHappiness)~='function' then return end
+    if UnitExists and not A.Safe('pet exists', UnitExists, 'pet') then return end
+    local happiness = A.Safe('pet happiness', GetPetHappiness)
+    if happiness==1 then
+        A.Add(out, {key='petmood', petMood=true, emptyEssential=true,
+            title='Hunter pet is unhappy',
+            detail='Feed your pet before travelling (75% damage; risk of running away).', priority=10})
+    end
+end
+function A.ApplyBindingLabels()
+    BINDING_HEADER_ONELASTTHING = A.name
+    BINDING_NAME_ONELASTTHING_TOGGLE = A.Translate('Toggle / check checklist')
+    BINDING_NAME_ONELASTTHING_SETTINGS = A.Translate('Open settings')
+end
+function A.TogglePopup()
+    if not A.db then return end
+    if InCombatLockdown() then A.Print('Checklist will open after combat.');return end
+    if A.frame and A.frame:IsShown() then A.scopeRecovery=nil;A.frame:Hide()
+    else A.Refresh('Manual check',true,true) end
+end
+function A.ToggleSettings()
+    if not A.db then return end
+    if InCombatLockdown() then A.Print('Open settings after combat.');return end
+    if A.settings and A.settings:IsShown() then A.settings:Hide()
+    elseif A.ShowSettings then A.ShowSettings() end
+end
+A.ApplyBindingLabels()
 function A.Navigate(row)
     if InCombatLockdown() then return end
     local native=row.map and row.x and row.y and C_Map and C_Map.SetUserWaypoint and UiMapPoint

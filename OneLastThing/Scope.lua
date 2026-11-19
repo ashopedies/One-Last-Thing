@@ -71,8 +71,8 @@ function A.ScopeAllows(row)
     local s=A.scope
     if row.map then return A.Nearby(row.map,row.x,row.y) end
     if not s or s.noFilter or A.db.nearbyOnly==false then return true end
-    -- General inventory/cap warnings have no claimed physical destination.
-    return not row.quest and not row.skill
+    -- General inventory/cap warnings and bag quest-starters have no external destination.
+    return row.bagQuest or (not row.quest and not row.skill)
 end
 
 function A.ClearLocation(recover,previous)

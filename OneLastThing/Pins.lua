@@ -21,6 +21,10 @@ function A.TrackWaypoint(row,map,x,y)
     p.supply=tonumber((row.key or ''):match('^supply:(%d+)'))
     if p.supply and A.db.supplies[p.supply] then p.target=A.db.supplies[p.supply].target end
     A.db.pin=p
+    if A.UpdateRowPinStates then A.UpdateRowPinStates() end
+end
+function A.IsPinnedRow(row)
+    return row~=nil and A.db~=nil and A.db.pin~=nil and A.db.pin.key==row.key
 end
 local function same(a,b)
     return a and b and a.map==b.map and math.abs(a.x-b.x)<.00001 and math.abs(a.y-b.y)<.00001
@@ -69,7 +73,10 @@ function A.CleanupPin()
     local owned=same(p,live) or (p.hyperlink and liveLink==p.hyperlink)
     if not owned then
         -- Drop ownership only when a replacement or removal is observable.
-        if live or liveLink or removed then A.db.pin=nil end
+        if live or liveLink or removed then
+            A.db.pin=nil
+            if A.UpdateRowPinStates then A.UpdateRowPinStates() end
+        end
         return
     end
     if finished(p) and C_Map.ClearUserWaypoint then
@@ -83,5 +90,6 @@ function A.CleanupPin()
             A.Safe('untrack completed task waypoint',C_SuperTrack.SetSuperTrackedUserWaypoint,false)
         end
         A.db.pin=nil
+        if A.UpdateRowPinStates then A.UpdateRowPinStates() end
     end
 end

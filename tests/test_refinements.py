@@ -289,6 +289,136 @@ def run():
     ''')
     print('PASS: subzone flicker prevention, item-load coalescing, navigation/wheel guards, shared coords, trash scan skip and German localization parity')
 
+    vm = fresh_client('HUNTER', locale='deDE')
+    vm.execute('''
+        local A=OneLastThing
+        -- Borders default OFF to preserve free-floating text; opt-in toggle enables them and hides when collapsed.
+        assert(A.db.showBorders==false and A.db.locked==false)
+        local borderAlphas={}
+        local function watchBorder(frame)
+            local orig=frame.SetBackdropBorderColor
+            frame.SetBackdropBorderColor=function(self,r,g,b,a) borderAlphas[self]=a;if orig then orig(self,r,g,b,a) end end
+        end
+        local rows={{key='q:pin',title='Pin target',detail='Detail',map=1458,x=50,y=50}}
+        A.Draw(rows,'Manual check',true)
+        local rowWidget=A.frame.widgets[1]
+        watchBorder(A.frame);watchBorder(rowWidget)
+        A.ApplyBorders()
+        assert(borderAlphas[A.frame]==0 and borderAlphas[rowWidget]==0)
+        A.db.showBorders=true;A.ApplyBorders()
+        assert(borderAlphas[A.frame]>0 and borderAlphas[rowWidget]>0)
+        A.SetCollapsed(true,'manual')
+        assert(borderAlphas[A.frame]==0)
+        A.SetCollapsed(false,'manual')
+        assert(borderAlphas[A.frame]>0)
+        A.db.showBorders=false;A.ApplyBorders()
+        assert(borderAlphas[A.frame]==0 and borderAlphas[rowWidget]==0)
+
+        -- Active pin highlights immediately on Navigate and clears on CleanupPin; hover resets on Draw/Hide.
+        local wp
+        UiMapPoint={CreateFromCoordinates=function(m,x,y) return {uiMapID=m,position={GetXY=function() return x,y end}} end}
+        C_Map.SetUserWaypoint=function(p) wp=p;return true end
+        C_Map.GetUserWaypoint=function() return wp end
+        C_Map.ClearUserWaypoint=function() wp=nil end
+        C_Map.CanSetUserWaypointOnMap=function() return true end
+        OpenWorldMap=function() end
+        assert(rowWidget.go:GetText()=='Karte' and not rowWidget.oltPinned)
+        A.Navigate(rows[1])
+        assert(rowWidget.oltPinned and rowWidget.go:GetText()=='Karte •' and rowWidget.accent.width==3)
+        wp=nil;A.CleanupPin()
+        assert(not rowWidget.oltPinned and rowWidget.go:GetText()=='Karte' and rowWidget.accent.width==2)
+        rowWidget:GetScript('OnEnter')(rowWidget);assert(rowWidget.hovered==true)
+        A.frame:Hide();assert(rowWidget.hovered==false)
+        A.Draw(rows,'Manual check',true)
+
+        -- Right-click opens reminder menu; Minimal left-click navigates; Lock window prevents drag/resize.
+        rowWidget:GetScript('OnMouseUp')(rowWidget,'RightButton')
+        assert(A.reminderMenu and A.reminderMenu:IsShown() and A.reminderMenu.row==rows[1])
+        A.reminderMenu:Hide()
+        A.db.rowMode='minimal';A.Draw(rows,'Manual check',true)
+        local navigated=0;local origNav=A.Navigate
+        A.Navigate=function(r) navigated=navigated+1 end
+        rowWidget:GetScript('OnMouseUp')(rowWidget,'LeftButton')
+        assert(navigated==1)
+        A.Navigate=origNav;A.db.rowMode='default';A.Draw(rows,'Manual check',true)
+        local moved,sized=0,0
+        A.frame.StartMoving=function() moved=moved+1 end
+        A.frame.StartSizing=function() sized=sized+1 end
+        A.db.locked=true
+        A.frame:GetScript('OnDragStart')(A.frame)
+        A.frame.header:GetScript('OnDragStart')(A.frame.header)
+        rowWidget:GetScript('OnDragStart')(rowWidget)
+        A.frame.grip:GetScript('OnMouseDown')(A.frame.grip,'LeftButton')
+        assert(moved==0 and sized==0)
+        A.frame.header:GetScript('OnClick')(A.frame.header)
+        assert(A.db.collapsed==true) -- header click still toggles collapse when locked
+        A.SetCollapsed(false,'manual');A.db.locked=false
+
+        -- Native WoW Key Bindings labels (deDE) and combat-safe toggle handlers.
+        assert(BINDING_HEADER_ONELASTTHING=='One Last Thing')
+        assert(BINDING_NAME_ONELASTTHING_TOGGLE=='Liste umschalten / prüfen')
+        assert(BINDING_NAME_ONELASTTHING_SETTINGS=='Einstellungen öffnen')
+        assert(A.frame:IsShown())
+        A.TogglePopup();assert(not A.frame:IsShown())
+        combat=true;A.TogglePopup();assert(not A.frame:IsShown())
+        A.ToggleSettings();assert(not (A.settings and A.settings:IsShown()))
+        combat=false;A.ToggleSettings();assert(A.settings and A.settings:IsShown())
+        A.ToggleSettings();assert(not A.settings:IsShown())
+
+        -- Four pure-API reminders: bag quest-starters, unspent talents, Hearthstone (bank vs missing), unhappy Hunter pet.
+        C_Container={
+            GetContainerNumSlots=function(bag) return bag==0 and 16 or 0 end,
+            GetContainerItemQuestInfo=function(bag,slot)
+                if bag==0 and slot==1 then return {isQuestItem=true,questID=7777,isActive=false} end
+                return {isQuestItem=false}
+            end,
+            GetContainerItemInfo=function(bag,slot)
+                if bag==0 and slot==1 then return {itemID=5555,itemName='Zerknitterte Notiz'} end
+            end,
+        }
+        UnitCharacterPoints=function() return 2 end
+        GetBindLocation=function() return 'Orgrimmar' end
+        local hsBags,hsBank=0,1
+        C_Item.GetItemCount=function(id,includeBank)
+            if id==6948 then return includeBank and (hsBags+hsBank) or hsBags end
+            return 0
+        end
+        UnitExists=function(u) return u=='pet' end
+        local petMood=1
+        GetPetHappiness=function() return petMood end
+        A.db.sources={}
+        for _,n in ipairs({'AttuneRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
+            A.db.sources[n]=false
+        end
+        local collected=A.Collect(1458,false)
+        assert(#collected==4)
+        local byKey={};for _,r in ipairs(collected) do byKey[r.key]=r end
+        assert(byKey['petmood'] and A.Translate(byKey['petmood'].title)=='Begleiter ist unglücklich')
+        assert(byKey['bagquest:7777'] and A.Translate(byKey['bagquest:7777'].title)=='Quest im Inventar starten: Zerknitterte Notiz')
+        assert(byKey['hearthstone'] and A.Translate(byKey['hearthstone'].title)=='Ruhestein liegt in der Bank')
+        assert(A.Translate(byKey['hearthstone'].detail):find('Aktueller Heimatort: Orgrimmar',1,true))
+        assert(byKey['talents'] and A.Translate(byKey['talents'].title)=='Freie Talentpunkte (2)')
+        -- Missing Hearthstone (not in bank either), happy pet, spent talents, accepted bag quest all clear cleanly.
+        hsBank=0;collected=A.Collect(1458,false)
+        byKey={};for _,r in ipairs(collected) do byKey[r.key]=r end
+        assert(A.Translate(byKey['hearthstone'].title)=='Ruhestein fehlt in den Taschen')
+        hsBags=1;petMood=3;UnitCharacterPoints=function() return 0 end;active={[7777]=true}
+        assert(#A.Collect(1458,false)==0)
+
+        -- Settings 9-section cleanup + smart auto-collapse of Addon requirements when all 5 core addons are loaded.
+        local allCore={Attune=true,Questie=true,QuestieDB=true,SkillUpForever=true,TrainerSpells=true}
+        C_AddOns.IsAddOnLoaded=function(id) return allCore[id] or false end
+        A.db.settingsSections={};A.ShowSettings();A.settings.signature=nil;A.BuildSettings()
+        assert(#A.settings.sections==9 and not A.settings.sectionByID.addons.open)
+        allCore.QuestieDB=false;A.settings.signature=nil;A.BuildSettings()
+        assert(A.settings.sectionByID.addons.open)
+        -- Explicit user choice overrides auto-collapse/expand.
+        A.db.settingsSections.addons=false;A.LayoutSettingsSections()
+        assert(not A.settings.sectionByID.addons.open)
+    ''')
+    print('PASS: borderless default & opt-in borders, active pin sync, row hover/right-click/minimal-click/lock, '
+          'WoW keybinds, 4 pure-API reminders (bag quests, talents, Hearthstone, Hunter pet mood), Settings auto-collapse and deDE parity')
+
 
 if __name__ == '__main__':
     run()

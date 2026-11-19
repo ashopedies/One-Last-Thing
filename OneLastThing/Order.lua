@@ -21,9 +21,12 @@ end
 local function tier(row)
     if row.quest and not row.finish and row.dungeonPickup then return 10 end
     if row.emptyEssential or row.brokenGear then return 15 end
+    if row.bagQuest then return 20 end
     if row.quest and not row.finish and (row.classQuest or row.accessQuest or row.importantReason) then return 20 end
+    if row.hearthstone then return 24 end
     if row.criticalBook or row.professionRank or row.flight then return 25 end
     if row.quest and not row.finish then return 30 end
+    if row.talents then return 32 end
     if row.quest and row.finish then return 35 end
     if row.weapon then return 55 end
     if row.spell or (row.key or ''):match('^train:') then return 80 end

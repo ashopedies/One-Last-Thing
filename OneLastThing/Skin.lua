@@ -34,6 +34,12 @@ function A.ThemePalette(theme)
     end
     return {{1,.82,0},{.42,.72,1},{.94,.90,.79}}
 end
+function A.ToneColor(tone,dim)
+    local d=A.db or {}
+    A.palette=A.palette or A.ThemePalette(d.theme)
+    local color=d.theme=='original' and (A.originalColors[tone or (dim and 'muted' or 'text')] or A.originalColors.text) or A.palette[A.toneSlots[tone or 'text'] or 3]
+    return color[1],color[2],color[3]
+end
 function A.ApplyTheme()
     local theme=A.db and A.db.theme or 'blizzard'
     if not A.themeNames[theme] then theme='blizzard';if A.db then A.db.theme=theme end end
@@ -42,6 +48,8 @@ function A.ApplyTheme()
     for scroll in pairs(A.scrolls or {}) do
         local color=A.palette[2];scroll.pitThumb:SetColorTexture(color[1],color[2],color[3],.48)
     end
+    A.ApplyOpacity()
+    if A.UpdateRowPinStates then A.UpdateRowPinStates() end
 end
 function A.SetTheme(theme)
     if not A.themeNames[theme] then return end
@@ -79,9 +87,8 @@ function A.Font(fs,size,dim,tone)
     local outline=({none='',thin='OUTLINE',thick='THICKOUTLINE'})[d.fontOutline or 'none'] or ''
     local ok=fs:SetFont(face,(size or 12)*(d.fontScale or 1),outline)
     if ok==false and face~=STANDARD_TEXT_FONT then fs:SetFont(STANDARD_TEXT_FONT,(size or 12)*(d.fontScale or 1),outline) end
-    A.palette=A.palette or A.ThemePalette(d.theme)
-    local color=d.theme=='original' and (A.originalColors[tone or (dim and 'muted' or 'text')] or A.originalColors.text) or A.palette[A.toneSlots[tone or 'text'] or 3]
-    fs:SetTextColor(color[1],color[2],color[3],dim and .76 or 1)
+    local r,g,b=A.ToneColor(tone,dim)
+    fs:SetTextColor(r,g,b,dim and .76 or 1)
     local shadow=d.fontShadow or 'soft'
     fs:SetShadowColor(0,0,0,shadow=='none' and 0 or (shadow=='strong' and 1 or .8))
     local offset=shadow=='none' and 0 or (shadow=='strong' and 2 or 1)
@@ -97,7 +104,8 @@ function A.Tint(fs,tone)
     A.Font(fs,v.size,v.dim,tone)
 end
 function A.RowTone(row)
-    if row.importantReason then return 'warning' end
+    if row.petMood then return 'urgent' end
+    if row.importantReason or row.hearthstone then return 'warning' end
     if row.key=='bags' or row.repair then return 'warning' end
     if row.key:find('^supply:') then
         local id=tonumber(row.key:sub(8))
@@ -106,16 +114,41 @@ function A.RowTone(row)
     if row.key:find(':end$') then return 'success' end
     return row.category or 'text'
 end
+function A.ApplyBorder(frame)
+    if not (frame and frame.SetBackdropBorderColor) then return end
+    local compact=frame==A.frame and A.db and A.db.collapsed
+    if compact then frame:SetBackdropBorderColor(0,0,0,0);return end
+    if frame.pitSettingsBackground then
+        local r,g,b=A.ToneColor('muted',true)
+        frame:SetBackdropBorderColor(r,g,b,.26);return
+    end
+    if not (A.db and A.db.showBorders) then frame:SetBackdropBorderColor(0,0,0,0);return end
+    if frame.oltPinned then
+        local r,g,b=A.ToneColor('action')
+        frame:SetBackdropBorderColor(r,g,b,.72);return
+    end
+    local r,g,b=A.ToneColor('muted',true)
+    local alpha=math.max(.24,math.min(.45,((A.db.opacity or 0)*.65)+.22))
+    frame:SetBackdropBorderColor(r,g,b,alpha)
+end
 function A.Background(frame,r,g,b,factor)
     A.panels[frame]={r=r,g=g,b=b,factor=factor or 1}
     local compact=frame==A.frame and A.db and A.db.collapsed
     frame:SetBackdropColor(r,g,b,compact and 0 or (frame.pitSettingsBackground and .7 or (((A.db and A.db.opacity) or 0)*(factor or 1))))
+    A.ApplyBorder(frame)
 end
 function A.ApplyOpacity()
-    for f,v in pairs(A.panels) do f:SetBackdropColor(v.r,v.g,v.b,(f==A.frame and A.db.collapsed) and 0 or (f.pitSettingsBackground and .7 or A.db.opacity*v.factor)) end
+    for f,v in pairs(A.panels) do
+        f:SetBackdropColor(v.r,v.g,v.b,(f==A.frame and A.db.collapsed) and 0 or (f.pitSettingsBackground and .7 or A.db.opacity*v.factor))
+        A.ApplyBorder(f)
+    end
+end
+function A.ApplyBorders()
+    A.ApplyOpacity()
+    if A.UpdateRowPinStates then A.UpdateRowPinStates() end
 end
 function A.Panel(frame)
-    frame:SetBackdrop({bgFile='Interface/Buttons/WHITE8X8'})
+    frame:SetBackdrop({bgFile='Interface/Buttons/WHITE8X8',edgeFile='Interface/Buttons/WHITE8X8',edgeSize=1})
     A.Background(frame,0,0,0,1)
 end
 function A.StyleButton(b)

@@ -293,7 +293,7 @@ local function buildSettings()
         table.sort(ids,function(a,b) return A.SupplyName(a)<A.SupplyName(b) end)
         for _,id in ipairs(ids) do supplyRow(id,A.db.supplies[id].target,true) end
         text('Targets save on Enter or when leaving the field.',10)
-        text('Add item ID                           Target',11)
+        own(label(parent,'Add item ID',24,-y,11));own(label(parent,'Target',220,-y,11));y=y+20
         local item=own(acquire('EditBox',nil,parent,'InputBoxTemplate'));item:SetSize(170,24);item:SetPoint('TOPLEFT',24,-y);item:SetAutoFocus(false);item:SetNumeric(true)
         local count=own(acquire('EditBox',nil,parent,'InputBoxTemplate'));count:SetSize(70,24);count:SetPoint('TOPLEFT',220,-y);count:SetAutoFocus(false);count:SetNumeric(true);A.SetText(count,'3')
         own(button(parent,'Add',310,-y,73,function()
@@ -312,21 +312,26 @@ local function buildSettings()
     text('The six capital cities use city-wide reminders.',11)
     f.range=slider('Outside-city range (yards)',250,2000,50,A.db.nearbyRadius,function(v) A.db.nearbyRadius=v;A.Refresh('Updated',false) end,function(v) return tostring(math.floor(v+.5)) end)
     section('appearance','Appearance',false)
+    text('Window & layout',13)
     f.layoutPicker=dropdown('Reminder layout','rowMode',{{'default','Default'},{'compact','Compact'},{'minimal','Minimal'}})
     dropdown('Header position','headerPosition',{{'top','Top'},{'bottom','Bottom'}})
+    control('Lock window position',function() return A.db.locked==true end,function(v) A.db.locked=v end)
     f.fadeDelay=slider('Completion fade delay',5,60,1,A.db.completionDelay,function(v) A.db.completionDelay=math.floor(v+.5) end,function(v) return math.floor(v+.5)..'s' end)
-    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'}})
-    f.opacity=slider('Background opacity',0,100,1,A.db.opacity*100,function(v) A.db.opacity=v/100;A.ApplyOpacity() end,function(v) return math.floor(v+.5)..'%' end)
-    f.fontPicker=dropdown('Font','fontFace',A.FontChoices)
-    f.fontSize=slider('Font size',80,130,5,A.db.fontScale*100,function(v) A.db.fontScale=v/100;A.ApplyFonts() end,function(v) return math.floor(v+.5)..'%' end)
-    dropdown('Text shadow','fontShadow',{{'none','None'},{'soft','Soft'},{'strong','Strong'}})
-    dropdown('Text outline','fontOutline',{{'none','None'},{'thin','Thin'},{'thick','Thick'}})
     f.scale=slider('Popup scale',65,150,5,A.db.scale*100,function(v) A.db.scale=v/100;if A.frame then A.frame:SetScale(A.db.scale) end end,function(v) return math.floor(v+.5)..'%' end)
     own(button(parent,'Reset popup size & position',8,-y,365,function()
         A.db.position=nil;A.db.size={width=440,height=320};A.db.scale=1;A.db.collapsed=false;A.db.collapseMode='manual'
         if A.frame then A.frame:ClearAllPoints();A.frame:SetPoint('CENTER');A.frame:SetScale(1);A.frame:SetSize(440,320);A.ApplyCollapsed() end
         A.BuildSettings()
-    end));y=y+40
+    end));y=y+38
+    text('Theme & style',13)
+    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'}})
+    f.opacity=slider('Background opacity',0,100,1,A.db.opacity*100,function(v) A.db.opacity=v/100;A.ApplyOpacity() end,function(v) return math.floor(v+.5)..'%' end)
+    control('Show borders',function() return A.db.showBorders==true end,function(v) A.db.showBorders=v;if A.ApplyBorders then A.ApplyBorders() end end)
+    y=y+6;text('Text',13)
+    f.fontPicker=dropdown('Font','fontFace',A.FontChoices)
+    f.fontSize=slider('Font size',80,130,5,A.db.fontScale*100,function(v) A.db.fontScale=v/100;A.ApplyFonts() end,function(v) return math.floor(v+.5)..'%' end)
+    dropdown('Text shadow','fontShadow',{{'none','None'},{'soft','Soft'},{'strong','Strong'}})
+    dropdown('Text outline','fontOutline',{{'none','None'},{'thin','Thin'},{'thick','Thick'}})
     for _,cat in ipairs(A.categories) do
         section('category:'..cat.id,cat.name,false)
         if cat.id=='quests' then
@@ -338,10 +343,12 @@ local function buildSettings()
         local keys={};for sub in pairs(cat.subs) do keys[#keys+1]=sub end
         table.sort(keys,function(a,b) return A.Translate(cat.subs[a])<A.Translate(cat.subs[b]) end)
         for _,sub in ipairs(cat.id~='supplies' and keys or {}) do
-            -- Child checkbox stores its own choice, independent of the parent.
-            local childBox=control(cat.subs[sub],function() return A.db.filters[cat.id..'/'..sub]~=false end,
-                function(v) A.SetCategory(cat.id,sub,v) end,true)
-            A.Font(childBox.label,11,true,cat.id)
+            if sub~='petmood' or (A.IsHunter and A.IsHunter()) then
+                -- Child checkbox stores its own choice, independent of the parent.
+                local childBox=control(cat.subs[sub],function() return A.db.filters[cat.id..'/'..sub]~=false end,
+                    function(v) A.SetCategory(cat.id,sub,v) end,true)
+                A.Font(childBox.label,11,true,cat.id)
+            end
         end
         if cat.id=='supplies' then
             if A.IsHunter() then
@@ -368,11 +375,12 @@ local function buildSettings()
         A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',false);A.Print('Skipped and timed-hidden reminders are visible again. Ignored reminders and category choices stay unchanged.')
     end));y=y+34
     own(button(parent,'Ignored reminders',8,-y,365,function() A.ShowTrashBin() end));y=y+38
-    text('/olt status — connection diagnostics',11)
-    section('addons','Addon requirements',true)
-    text('One Last Thing works without mandatory addon dependencies.',11)
-    text('These integrations enable the features listed below.',11)
-    text('Missing data providers are reported in the checklist.',11)
+    text('Assign hotkeys in Game Menu > Key Bindings > One Last Thing.',11)
+    local coreAddons={Attune=true,Questie=true,QuestieDB=true,SkillUpForever=true,TrainerSpells=true}
+    local coreLoaded=true
+    for _,r in ipairs(requirements) do if coreAddons[r.id] and not r.loaded then coreLoaded=false end end
+    section('addons','Addon requirements',not coreLoaded)
+    text('Optional integrations below unlock extra reminders. Missing providers appear in the checklist.',11)
     f.dependencyRows={}
     for _,r in ipairs(requirements) do
         local name=own(label(parent,r.name,8,-y,12));name:SetWidth(235)
