@@ -59,7 +59,7 @@ Distances are approximate straight-line yards, not walking routes. If the client
 
 ## Reminder range
 
-Orgrimmar, Undercity, Thunder Bluff, Stormwind, Ironforge and Darnassus show located reminders across the current city map. The exception never extends into adjacent zones or another capital.
+Orgrimmar, Undercity, Thunder Bluff, Stormwind, Ironforge and Darnassus show located reminders across the current city map. The exception never extends into adjacent zones or another capital. District changes keep the checklist visible while coordinates refresh, preserving visit skips, scroll position and filters.
 
 Everywhere else, distance filtering defaults to **850 yards**. Change it under **Settings > General & location > Outside-city range (yards)**, from 250 to 2,000 yards in 50-yard steps. The value is saved per character and does not restrict capital reminders. Existing saved ranges are preserved. General profession-cap warnings have no physical destination and remain visible independently of distance.
 
@@ -80,7 +80,7 @@ New to GitHub? Start with [GITHUB-START.md](docs/GITHUB-START.md). This project 
 ```sh
 python3 -m pip install -r requirements-dev.txt
 python3 tests/test_addon.py
-python3 tools/package.py --version 0.14.9
+python3 tools/package.py --version 0.14.10
 ```
 
 The install ZIP is written to `dist/`. It contains the addon and readable changelog. Tests simulate WoW APIs; they do not replace testing in the game. For a bug report, include client language, location, `/olt status`, reproduction steps and any BugSack error.

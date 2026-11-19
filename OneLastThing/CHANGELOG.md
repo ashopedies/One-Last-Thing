@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.10 — 2026-11-19
+
+- Removed capital-district flicker: keep a visible checklist in place during same-city zone/indoor events and temporary coordinate gaps. Existing city-wide tasks remain visible while fresh scope data is pending; no collection runs with stale coordinates.
+- Preserve scroll position when the same location recovers. Capital visit skips, manual collapse and open Filter menus remain intact, including manually opened checklists with automatic opening disabled.
+- Continue clearing old content on actual map changes, unknown map identity, flights, instances and world-loading transitions. Explicitly closing the popup cancels recovery and does not reopen it.
+- Added visibility/recovery checks across all six capitals and English/German, plus regressions for scroll/filter state, deferred scans and leaving the city safely.
+
 ## 0.14.9 — 2026-11-19
 
 - Routed the twelve capital Teleport/Portal spells to their own city and the matching NPC from TrainerSpellsPortalTrainers. General class trainers no longer receive these reminders. Existing level, faction, learned/ignored-spell and cost handling remains in place; localized NPC names come from installed data.

@@ -1,4 +1,4 @@
-# Live-client checks for 0.14.9
+# Live-client checks for 0.14.10
 
 New in 0.14.4: with Neav Express selected, confirm distance labels show ~ and the row actions show Map/Skip/Ignore without squares. Collapse a nonempty checklist and portal into a capital; it should expand. Collapse it again and walk into another district of that city; it should stay collapsed.
 
@@ -11,6 +11,8 @@ New in 0.14.7: in Riverglades/Rogmar, verify flight reminders can appear before 
 New in 0.14.8: skip a reminder in a capital, then walk between districts and indoor areas. The district label should update while the skipped reminder stays hidden. Leave the city and return; the visit-skipped reminder should return. Timed hides and ignored reminders should remain hidden. Repeat in German if available.
 
 New in 0.14.9: on a Mage, visit capitals with unlearned Teleport/Portal spells. Only that city's eligible spells should appear and Map should target the portal trainer. Learn/skip/ignore a spell and check its reminder clears. Test direct Map/Skip/Ignore in Default, Compact and Minimal at narrow widths and large fonts, in English/German. Ignore can be recovered in Settings; Show hidden reminders only restores temporary skips (and legacy timed hides).
+
+New in 0.14.10: move between capital districts and indoor areas. The checklist should stay visible while its district label updates, with skips, collapse state and scroll preserved. Test with Filter open too. Leaving the city, taking a flight or entering an instance must still clear the previous location; closing the window yourself must keep it closed.
 
 Automated behavior checks pass against simulated Lua 5.1 APIs. The current Forever build, protected execution and live databases still require in-game verification.
 

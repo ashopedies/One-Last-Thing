@@ -1753,11 +1753,11 @@ local event=OneLastThing.eventFrame.scripts.OnEvent
 timers={};event(nil,'PLAYER_LEAVING_WORLD');event(nil,'PLAYER_ENTERING_WORLD');flushTimers()
 assert(OneLastThing.frame:IsShown() and visits==1)
 OneLastThing.db.dismissed.keep=true
-event(nil,'PLAYER_CONTROL_GAINED');assert(not OneLastThing.frame:IsShown() and OneLastThing.scopeRecovery)
+event(nil,'PLAYER_CONTROL_GAINED');assert(OneLastThing.frame:IsShown() and OneLastThing.scopeRecovery)
 flushTimers();assert(OneLastThing.frame:IsShown() and visits==1 and OneLastThing.db.dismissed.keep)
 -- Background refresh may lose coordinates, but the existing two-second zone poll can recover.
 position=false;OneLastThing.Refresh('Updated',false)
-assert(not OneLastThing.frame:IsShown() and OneLastThing.scopeRecovery)
+assert(OneLastThing.frame:IsShown() and OneLastThing.scopeRecovery)
 position=true;event(nil,'ZONE_CHANGED_INDOORS');flushTimers()
 assert(OneLastThing.frame:IsShown() and not OneLastThing.scopeRecovery and visits==1)
 -- An explicitly closed popup must not be resurrected by that recovery path.

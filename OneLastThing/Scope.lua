@@ -69,6 +69,13 @@ function A.ClearLocation(recover,previous)
     local scope=previous or A.scope
     if recover and A.frame and A.frame:IsShown() and not A.loadingWorld and not A.InTransit() and not A.AutomaticSuppressed() then
         A.scopeRecovery={key=scope and scope.key,manual=A.db.auto==false}
+        -- Every district shares this city's destinations. Keep the existing
+        -- display while fresh coordinates settle; RequireScope still returns
+        -- nil on missing data so Refresh cannot collect with stale positions.
+        if scope and A.IsCapitalMap(scope.map) and A.Map()==scope.map then
+            A.scope=scope
+            return
+        end
     elseif not recover then A.scopeRecovery=nil end
     A.scope=nil
     if A.frame then A.frame:Hide() end

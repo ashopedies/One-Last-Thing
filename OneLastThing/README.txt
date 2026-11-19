@@ -1,4 +1,4 @@
-ONE LAST THING — 0.14.9
+ONE LAST THING — 0.14.10
 WoW Forever / interface 16001
 
 INSTALL
@@ -34,7 +34,9 @@ actions, with the full explanation on hover.
 
 Automatic opening is suppressed inside dungeons, raids and battlegrounds.
 /olt still opens a manual checklist there, even if automatic popups are off.
-Missing map/position data and loading transitions hide old location content.
+Real map/loading transitions hide old location content. Within a confirmed
+capital, district-coordinate refreshes keep the checklist visible without
+resetting visit skips, scroll position or the Filter menu.
 
 Map, Skip and Ignore are directly available in every reminder layout.
 Minimal/narrow rows use M/S for Map/Skip and keep Ignore visible.
