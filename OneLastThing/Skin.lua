@@ -6,12 +6,15 @@ local function neav()
 end
 A.fonts=setmetatable({},{__mode='k'})
 A.panels=setmetatable({},{__mode='k'})
--- Each theme has exactly three foreground colors. Muted text changes only
+-- Each themed palette has exactly three foreground colors; Original retains
+-- its historical role colors. Muted text changes only
 -- opacity, never introduces an extra RGB shade outside this palette.
-A.themeNames={blizzard='Blizzard',class='Class Colors',pop='Pop',original='Original'}
+A.themeNames={blizzard='Blizzard',class='Class Colors',pop='Pop',original='Original',neavCurrent='Neav: Current',neavMoss='Neav: Muted Moss'}
 A.toneSlots={settings=1,brand=1,quests=1,training=1,warning=1,urgent=1,
     professions=2,supplies=2,action=2,success=2,
     errands=3,text=3,muted=3,dismiss=3,snooze=3}
+-- Moss separates navigation accents from headers and ordinary task text.
+A.mossToneSlots=setmetatable({brand=2,quests=3,training=3,action=1},{__index=A.toneSlots})
 A.originalColors={
     settings={.75,.63,.94},text={.76,.82,.87},muted={.53,.64,.70},brand={.94,.74,.42},
     quests={.96,.77,.38},professions={.40,.83,.65},training={.75,.63,.94},
@@ -19,8 +22,30 @@ A.originalColors={
     dismiss={.76,.55,.55},snooze={.66,.61,.82},success={.43,.87,.56},
     warning={1,.67,.31},urgent={1,.46,.37},
 }
+-- NeavFlare 0.6.56: Current leaves FlareUI unchanged; Muted Moss supplies
+-- its bar hues. Current lifts native shades; Moss uses more distinct text
+-- greens and golds so its accents do not blend into the pale body text.
+local function textShade(color,amount)
+    return {color[1]+(1-color[1])*amount,color[2]+(1-color[2])*amount,color[3]+(1-color[3])*amount}
+end
+local function currentNeavColor(key,fallback)
+    local uf=FlareUI and FlareUI.UnitFrames
+    local color=uf and A.Safe('Neav palette '..key,uf.Color,key)
+    if type(color)~='table' then return fallback end
+    local r,g,b=color[1] or color.r,color[2] or color.g,color[3] or color.b
+    for _,value in pairs({r,g,b}) do
+        if type(value)~='number' or (issecretvalue and issecretvalue(value)) then return fallback end
+    end
+    if type(r)~='number' or type(g)~='number' or type(b)~='number' then return fallback end
+    if r~=r or g~=g or b~=b or r<0 or r>1 or g<0 or g>1 or b<0 or b>1 then return fallback end
+    return {r,g,b} -- never mutate a provider-owned palette
+end
 function A.ThemePalette(theme)
-    if theme=='class' then
+    if theme=='neavMoss' then
+        return {{225/255,184/255,102/255},{145/255,190/255,120/255},{226/255,222/255,209/255}}
+    elseif theme=='neavCurrent' then
+        return {textShade(currentNeavColor('cast',{1,.7,0}),.25),textShade(currentNeavColor('friendly',{.2,.8,.2}),.25),{.88,.90,.92}}
+    elseif theme=='class' then
         local _,class=UnitClass('player')
         local c=RAID_CLASS_COLORS and RAID_CLASS_COLORS[class]
         if not c and C_ClassColor and C_ClassColor.GetClassColor then c=C_ClassColor.GetClassColor(class) end
@@ -80,7 +105,8 @@ function A.Font(fs,size,dim,tone)
     local ok=fs:SetFont(face,(size or 12)*(d.fontScale or 1),outline)
     if ok==false and face~=STANDARD_TEXT_FONT then fs:SetFont(STANDARD_TEXT_FONT,(size or 12)*(d.fontScale or 1),outline) end
     A.palette=A.palette or A.ThemePalette(d.theme)
-    local color=d.theme=='original' and (A.originalColors[tone or (dim and 'muted' or 'text')] or A.originalColors.text) or A.palette[A.toneSlots[tone or 'text'] or 3]
+    local slots=d.theme=='neavMoss' and A.mossToneSlots or A.toneSlots
+    local color=d.theme=='original' and (A.originalColors[tone or (dim and 'muted' or 'text')] or A.originalColors.text) or A.palette[slots[tone or 'text'] or 3]
     fs:SetTextColor(color[1],color[2],color[3],dim and .76 or 1)
     local shadow=d.fontShadow or 'soft'
     fs:SetShadowColor(0,0,0,shadow=='none' and 0 or (shadow=='strong' and 1 or .8))

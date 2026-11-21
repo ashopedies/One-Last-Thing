@@ -354,7 +354,7 @@ function A.Draw(rows,reason,force)
     f.displayScopeKey=scopeKey()
     local oldScroll=f.scroll:GetVerticalScroll()
     f.rowCount=#rows
-    A.SetText(f.sub,(A.ChecksIncomplete and A.ChecksIncomplete() and (A.Translate('Some checks unavailable')..' · ') or '')..(A.LocationName() or A.Translate('Unknown location'))..' · '..A.Translate(#rows..' reminders'))
+    A.SetText(f.sub,(A.ChecksIncomplete and A.ChecksIncomplete() and (A.Translate('Some checks unavailable')..' · ') or '')..(A.LocationName() or A.Translate('Unknown location'))..' · '..A.Translate(#rows..' reminders')..(A.scope and A.scope.rangeApproximate and (' · '..A.Translate('Approximate range')) or ''))
     -- Reminder rows are pooled; category controls live only in the Filter menu.
     f.rowPool=f.rowPool or {}
     for _,w in ipairs(f.widgets) do w:Hide() end
@@ -380,7 +380,14 @@ function A.Draw(rows,reason,force)
                                 GameTooltip:AddLine(A.Translate(self.row.categoryName or '')..' · '..A.Translate(self.row.subcategoryName or ''),1,1,1,true)
                                 local distance=A.DistanceText(self.row)
                                 if distance~='' then GameTooltip:AddLine(distance,1,1,1,true) end
+                                if self.row.rangeApproximate then GameTooltip:AddLine(A.Translate('Range estimated from map coordinates; yard conversion unavailable.'),1,1,1,true) end
                                 GameTooltip:AddLine(A.Translate(A.DisplayDetail(self.row,true)),1,1,1,true)
+                                if A.ReminderExplanation then
+                                    GameTooltip:AddLine(' ')
+                                    local color=(A.palette or A.ThemePalette(A.db.theme))[1]
+                                    GameTooltip:AddLine(A.Translate('Why this reminder?'),color[1],color[2],color[3],true)
+                                    for _,line in ipairs(A.ReminderExplanation(self.row)) do GameTooltip:AddLine(line,1,1,1,true) end
+                                end
                                 GameTooltip:Show()
                             end
                         end)

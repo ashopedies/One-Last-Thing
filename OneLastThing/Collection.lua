@@ -88,6 +88,7 @@ function A.RunProvider(name,out,map,travel,useCache)
         and cache.data==classData and cache.trainers==classTrainers and cache.portals==classPortals and time()-cache.when<60 then
         for _,row in ipairs(cache.rows) do
             if row.classSpell and A.PlaceClassSpell then row=A.PlaceClassSpell(row,map) end
+            if row and A.PlaceDestination then row=A.PlaceDestination(row,map) end
             if row then A.Add(out,row) end
         end
         return
@@ -111,5 +112,9 @@ function A.RunProvider(name,out,map,travel,useCache)
     if useCache and cached[name] and not warning then
         A.providerCache=A.providerCache or {};A.providerCache[name]={fn=fn,key=key,when=time(),rows=raw,data=classData,trainers=classTrainers,portals=classPortals}
     end
-    for i=seeded+1,#raw do A.Add(out,raw[i]) end
+    for i=seeded+1,#raw do
+        local row=raw[i]
+        if A.PlaceDestination then row=A.PlaceDestination(row,map) end
+        if row then A.Add(out,row) end
+    end
 end

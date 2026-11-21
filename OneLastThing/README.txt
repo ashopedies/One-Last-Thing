@@ -1,4 +1,4 @@
-ONE LAST THING — 0.14.18
+ONE LAST THING — 0.14.22
 WoW Forever / interface 16001
 
 INSTALL
@@ -134,3 +134,43 @@ by their child controls.
 
 Map * marks the active task pin. Right-click Map to clear that pin.
 Map * kennzeichnet den aktiven Aufgabenpin. Rechtsklick auf Karte entfernt ihn.
+
+NEAV COLOR THEMES
+/olt settings > Appearance > Color theme: Neav: Current / Neav: Muted Moss.
+Moss follows NeavFlare 0.6.56 green/gold hues, brightened for readable text.
+Current reads the active FlareUI cast/friendly colors; choose Current in NeavFlare
+for the matching pair. Without FlareUI it uses a green/gold fallback.
+Both themes work without NeavFlare and do not change its settings.
+DE: /olt settings > Darstellung > Farbschema: Neav: Current / Neav: Muted Moss.
+Die Farbtöne werden für lesbaren Text aufgehellt. Current nutzt die aktiven
+FlareUI-Farben; dort ebenfalls Current auswählen. Ohne FlareUI gilt eine
+grün-goldene Ersatzpalette. Bestehende Auswahl und andere Addons bleiben unverändert.
+
+DESTINATIONS AND DISTANCE
+When a quest has several valid locations, OLT selects the nearest current-map
+giver/spawn and updates that choice as you move without a full catalogue rescan.
+Approximate range means world-coordinate conversion was unavailable, so the
+configured yard radius is estimated using map coordinates. It is not an exact
+yard measurement. Native profession rank/cap take precedence over planner data.
+DE: Bei mehreren gültigen Questorten wird der nächstgelegene Ort auf der
+aktuellen Karte gewählt. Ungefährer Umkreis bedeutet eine Schätzung aus
+Kartenkoordinaten, keine genaue Entfernungsmessung. Unbekannte Preise bleiben
+als unbekannt gekennzeichnet; kostenlose Ausbildung wird weiterhin als 0c angezeigt.
+
+REMINDER EXPLANATIONS / INFORMATIONAL ADVICE
+Hover a reminder for Why this reminder?: source, reason, requirements, location
+evidence and price confidence. Database coordinates do not prove a live NPC
+check. Recorded prices can change; catalogue prices may have different discounts.
+Settings > Professions > Show informational profession-cap warnings controls
+generic near-cap advice (on by default, per character). Turning it off keeps
+local rank trainers, rank quests and buy-ahead books enabled.
+DE: Mit der Maus über einen Hinweis fahren: Warum dieser Hinweis? erklärt
+Quelle, Grund, Voraussetzungen, Ortsangaben und Preisart.
+Unter Einstellungen > Berufe kannst du allgemeine Hinweise zur Berufsgrenze
+ausblenden. Lehrer, Berufsquests und Bücher bleiben weiterhin aktiviert.
+
+MUTED MOSS ACCENTS
+Moss headers, ivory regular quest/training text and gold actions/Settings
+provide clearer separation while retaining the three-color palette.
+DE: Moosgrüne Überschriften, elfenbeinfarbener Quest-/Ausbildungstext und
+goldene Aktionen/Einstellungen sorgen für deutlichere Akzente.

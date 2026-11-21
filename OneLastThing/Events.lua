@@ -78,7 +78,10 @@ events:SetScript('OnEvent',function(_,event,...)
     A.InvalidateForEvent(event)
     if event=='PLAYER_LOGIN' then
         ready=true
-        C_Timer.After(3,zone)
+        C_Timer.After(3,function()
+            if A.db.theme=='neavCurrent' then A.ApplyTheme() end -- native palette may initialize after our files
+            zone()
+        end)
         if not A.zoneTicker then A.zoneTicker=C_Timer.NewTicker(2,zone) end
         if not A.refreshTicker then A.refreshTicker=C_Timer.NewTicker(5,function()
             A.refreshTick=(A.refreshTick or 0)+1

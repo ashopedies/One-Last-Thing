@@ -72,7 +72,7 @@ local function manualRow(p,map,money)
         detail=vendor.name..' | '..(exact and '' or '~')..A.FormatMoney(cost)..'\n'..table.concat(lines,'\n'),
         why=A.Translate('Optional for the bandage route. Buy here to avoid another trip.'),
         professionID=129,profession=p.name,firstAidManuals=true,map=map,x=vendor.x,y=vendor.y,
-        cost=cost,currentSkill=p.rank,buyAhead=p.rank<180,priority=13,verify=not exact}
+        locationSource=exact and 'Your vendor observations' or 'OLT curated locations',priceConfidence=exact and 'observed' or 'estimate',cost=cost,currentSkill=p.rank,buyAhead=p.rank<180,priority=13,verify=not exact}
 end
 function A.ObserveImportantMerchant()
     A.importantOffers={}
@@ -116,7 +116,7 @@ function A.ImportantVendorRows(out,map)
                     detail=detail,buyAhead=early,requiredSkill=b.skill,requiredLevel=b.level,currentSkill=p.rank,
                     why=early and 'Buy here now to avoid a return trip when you meet the requirements.' or ('Profession rank book: raises your skill cap to '..b.cap),
                     professionID=p.skillLineID,profession=p.name,capMax=b.cap,criticalBook=true,
-                    map=map,x=vendor.x,y=vendor.y,cost=price,buyItem=b.item,priority=11,verify=not offer}
+                    locationSource=offer and 'Your vendor observations' or vendor.source or 'OLT curated locations',priceConfidence=offer and 'observed' or 'estimate',map=map,x=vendor.x,y=vendor.y,cost=price,buyItem=b.item,priority=11,verify=not offer}
             end
         end
         local row=manualRow(p,map,money)

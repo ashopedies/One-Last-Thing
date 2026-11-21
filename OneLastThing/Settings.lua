@@ -313,7 +313,7 @@ local function buildSettings()
     f.layoutPicker=dropdown('Reminder layout','rowMode',{{'default','Default'},{'compact','Compact'},{'minimal','Minimal'}})
     dropdown('Header position','headerPosition',{{'top','Top'},{'bottom','Bottom'}})
     f.fadeDelay=slider('Completion fade delay',5,60,1,A.db.completionDelay,function(v) A.db.completionDelay=math.floor(v+.5) end,function(v) return math.floor(v+.5)..'s' end)
-    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'}})
+    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'},{'neavCurrent','Neav: Current'},{'neavMoss','Neav: Muted Moss'}})
     f.opacity=slider('Background opacity',0,100,1,A.db.opacity*100,function(v) A.db.opacity=v/100;A.ApplyOpacity() end,function(v) return math.floor(v+.5)..'%' end)
     f.fontPicker=dropdown('Font','fontFace',A.FontChoices)
     f.fontSize=slider('Font size',80,130,5,A.db.fontScale*100,function(v) A.db.fontScale=v/100;A.ApplyFonts() end,function(v) return math.floor(v+.5)..'%' end)
@@ -350,7 +350,9 @@ local function buildSettings()
             supplies()
         end
         if cat.id=='professions' then
-            y=y+8;toggle('Important profession rank books (maximum 2)','importantVendorBuys')
+            y=y+8;toggle('Show informational profession-cap warnings','showCapWarnings')
+            text('Local rank trainers, rank quests and books stay enabled.',10)
+            toggle('Important profession rank books (maximum 2)','importantVendorBuys')
         end
         if cat.id=='errands' then
             y=y+8

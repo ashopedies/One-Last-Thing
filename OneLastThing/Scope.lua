@@ -30,7 +30,13 @@ function A.UpdateScope()
     end
     local key=A.IsCapitalMap(map) and tostring(map) or (tostring(map)..':'..tostring(name))
     A.scope={map=map,name=name,x=x,y=y,key=key,noFilter=not getPos}
+    if not A.IsCapitalMap(map) and A.db.nearbyOnly~=false and not A.scope.noFilter then
+        local _,approximate=A.DestinationDistance(map,(x or 0)*100,(y or 0)*100)
+        A.scope.rangeApproximate=approximate or nil
+    end
+    A.status.Range=A.scope.rangeApproximate and A.Translate('Range estimated from map coordinates; yard conversion unavailable.') or nil
     A.status.Location=name..(A.IsCapitalMap(map) and ' | city-wide reminders' or (A.db.nearbyOnly==false and ' | whole map' or (' | nearby reminders: '..(A.db.nearbyRadius or 850)..' yards')))
+    if A.scope.rangeApproximate then A.status.Location=A.status.Location..' | '..A.Translate('Approximate range') end
     return A.scope
 end
 function A.LocationName()
@@ -48,21 +54,58 @@ local function world(map,x,y)
         return continent,wx,wy
     end
 end
+local function coordinate(value) return type(value)=='number' and value==value and value>=0 and value<=100 end
+function A.ValidDestination(p)
+    return type(p)=='table' and type(p.map)=='number' and p.map>0 and p.map<math.huge and coordinate(p.x) and coordinate(p.y)
+end
+-- The distance estimate retains the existing map fallback, but callers can
+-- distinguish its units from an actual world-coordinate measurement.
+function A.DestinationDistance(map,x,y)
+    local scope=A.scope
+    if not scope or scope.map~=map or type(scope.x)~='number' or type(scope.y)~='number' then return end
+    local ca,ax,ay=world(map,scope.x,scope.y)
+    local cb,bx,by=world(map,x/100,y/100)
+    if ca and ca==cb and ax and bx then return math.sqrt((ax-bx)^2+(ay-by)^2),false end
+    return math.sqrt((scope.x-x/100)^2+(scope.y-y/100)^2)*850/.045,true
+end
+function A.SelectDestination(points,map)
+    local best,bestDistance,bestInside
+    local px,py=.5,.5
+    if A.scope and A.scope.map==map then px,py=A.scope.x or .5,A.scope.y or .5 end
+    for _,p in ipairs(points or {}) do
+        if A.ValidDestination(p) and p.map==map then
+            local distance=A.DestinationDistance(map,p.x,p.y) or math.sqrt((px-p.x/100)^2+(py-p.y/100)^2)*850/.045
+            local inside=A.Nearby(map,p.x,p.y)
+            if not best or (inside and not bestInside) or (inside==bestInside and distance<bestDistance) then
+                best,bestDistance,bestInside=p,distance,inside
+            end
+        end
+    end
+    return best
+end
+function A.PlaceDestination(row,map)
+    if not row.destinations then return row end
+    local target=A.SelectDestination(row.destinations,map)
+    if not target then return end
+    local placed={};for key,value in pairs(row) do placed[key]=value end
+    placed.map,placed.x,placed.y=target.map,target.x,target.y
+    placed.locationSource=target.locationSource or row.locationSource
+    if row.destinationSuffix then placed.detail=(row.destinationPrefix or '')..(target.name or row.destinationName or '')..row.destinationSuffix end
+    return placed
+end
 function A.Nearby(map,x,y)
     local scope=A.scope
-    -- Disabling radius checks never disables the current-map boundary.
     local current=scope and scope.map
     if current and map~=current then return false end
     if not scope or scope.noFilter or A.db.nearbyOnly==false then return true end
-    if not x or not y then return false end
+    if not coordinate(x) or not coordinate(y) then return false end
     if A.IsCapitalMap(map) then return true end
-    local radius=A.db.nearbyRadius or 850
-    local ca,ax,ay=world(map,scope.x,scope.y)
-    local cb,bx,by=world(map,x/100,y/100)
-    if ca and ca==cb and ax and bx then return (ax-bx)^2+(ay-by)^2<=radius^2 end
-    -- Conservative map-coordinate fallback when world conversion is absent.
-    local limit=.045*radius/850
-    return (scope.x-x/100)^2+(scope.y-y/100)^2<=limit^2
+    local distance,approximate=A.DestinationDistance(map,x,y)
+    if approximate then
+        scope.rangeApproximate=true
+        A.status.Range=A.Translate('Range estimated from map coordinates; yard conversion unavailable.')
+    end
+    return distance~=nil and distance<=(A.db.nearbyRadius or 850)
 end
 function A.ScopeAllows(row)
     local s=A.scope
@@ -105,7 +148,7 @@ function A.UpdateDistances(rows)
     if scope and scope.map and type(scope.x)=='number' and type(scope.y)=='number' then origin,ox,oy=world(scope.map,scope.x,scope.y) end
     local points={}
     for _,row in ipairs(rows) do
-        row.distanceYards=nil
+        row.distanceYards=nil;row.rangeApproximate=(scope and scope.map==row.map and scope.rangeApproximate and A.db.nearbyOnly~=false and not A.IsCapitalMap(row.map) and row.x and row.y) and true or nil
         if origin and ox and oy and row.map==scope.map and type(row.x)=='number' and type(row.y)=='number' then
             local key=tostring(row.x)..':'..tostring(row.y)
             local distance=points[key]
@@ -115,6 +158,8 @@ function A.UpdateDistances(rows)
                 points[key]=distance
             end
             row.distanceYards=distance or nil
+            if distance then row.rangeApproximate=nil end
+            if not distance and not A.IsCapitalMap(row.map) and A.db.nearbyOnly~=false and not scope.noFilter then row.rangeApproximate=true end
         end
     end
 end

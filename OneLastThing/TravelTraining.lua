@@ -13,15 +13,20 @@ function A.WeaponRows(out,map)
         if skill.classes and skill.classes[class] and not known(id) and UnitLevel('player')>=(skill.level or 1) then
             local info=C_Spell and A.Safe('weapon skill name',C_Spell.GetSpellInfo,id)
             local name=info and info.name or A.Safe('weapon skill legacy name',GetSpellInfo,id)
+            local destinations={}
             for _,npc in ipairs(skill.trainers and skill.trainers[faction] or {}) do
                 local t=data.trainers[npc];local zone=t and data.zones[t.zoneID]
                 if name and zone and zone.uiMapID==map then
-                    local cost=skill.cost or 0
-                    A.Add(out,{key='train:spell:'..id,spell=id,weapon=true,
-                        title='Weapon skill: '..name,
-                        detail=((t.names or {})[locale] or (t.names or {}).enUS or 'Weapon master')..' | '..(A.FormatMoney(cost)),
-                        map=map,x=t.x,y=t.y,priority=24})
+                    destinations[#destinations+1]={map=map,x=t.x,y=t.y,locationSource='TrainerSpells',name=(t.names or {})[locale] or (t.names or {}).enUS or 'Weapon master'}
                 end
+            end
+            local target=A.SelectDestination(destinations,map)
+            if target then
+                local cost=tonumber(skill.cost)
+                local suffix=' | '..A.FormatMoney(cost)
+                A.Add(out,{key='train:spell:'..id,spell=id,weapon=true,title='Weapon skill: '..name,
+                    detail=target.name..suffix,cost=cost,locationSource='TrainerSpells',priceConfidence=cost and 'catalogue' or 'unknown',destinations=destinations,destinationSuffix=suffix,
+                    map=map,x=target.x,y=target.y,priority=24})
             end
         end
     end
@@ -100,7 +105,7 @@ function A.FlightRows(out,map)
             if not A.db.flightKnown[node.nodeID] then
                 local x,y=project(node.position:GetXY())
                 if x and y and x>=0 and x<=1 and y>=0 and y<=1 then
-                    A.Add(out,{key='flight:'..node.nodeID,flight=true,flightID=node.nodeID,
+                    A.Add(out,{key='flight:'..node.nodeID,locationSource='WoW taxi map',flight=true,flightID=node.nodeID,
                         title=(undiscovered==true and 'Learn flight path: ' or 'Check flight path: ')..(node.name or 'Flight master'),
                         detail=undiscovered==true and 'The game marks this flight path undiscovered. Speak to its flight master.'
                             or 'Learned status is not reported. Open the flight map once to confirm.',

@@ -54,20 +54,15 @@ end
 function A.LocalClassTrainer(map,locations)
     local _,class=UnitClass('player');local faction=UnitFactionGroup('player')
     local locale=GetLocale and GetLocale() or 'enUS'
-    local position=C_Map.GetPlayerMapPosition and C_Map.GetPlayerMapPosition(map,'player')
-    local px,py=.5,.5;if position then px,py=position:GetXY() end
-    local found,best
+    local candidates={}
     local function consider(location,name)
         if location.uiMapID~=map or not location.x or not location.y then return end
         if not factionMatches(location.faction,faction) then return end
-        local distance=(location.x/100-px)^2+(location.y/100-py)^2
-        if not best or distance<best then
-            found={map=map,x=location.x,y=location.y,name=name};best=distance
-        end
+        candidates[#candidates+1]={map=map,x=location.x,y=location.y,name=name}
     end
     if type(locations)=='table' then
         for _,loc in ipairs(locations) do consider(loc,loc.name or 'Spell trainer') end
-        return found
+        return A.SelectDestination(candidates,map)
     end
     for _,trainer in ipairs((TrainerSpellsClassTrainers and TrainerSpellsClassTrainers[class]) or {}) do
         if factionMatches(trainer.faction,faction) and (not trainer.starter or UnitLevel('player')<8) then
@@ -76,7 +71,7 @@ function A.LocalClassTrainer(map,locations)
             for _,location in ipairs(trainer.locations or {}) do consider(location,name) end
         end
     end
-    return found
+    return A.SelectDestination(candidates,map)
 end
 local function talentState()
     local all,learned={},{}
@@ -163,15 +158,16 @@ function A.ClassSpellRows(out,map)
             -- Explicit sources must match this zone, not any class trainer.
             if locations then target=A.LocalClassTrainer(map,locations) end
             if target then
-                local cost=tonumber(d.cost) or 0
+                local cost=tonumber(d.cost)
                 local price=A.FormatMoney(cost)
-                local shortage=GetMoney and cost>GetMoney()
+                local money=GetMoney and GetMoney()
+                local shortage=cost and money and cost>money
                 local detail=' | '..price..(shortage and ' (short on gold)' or '')..(uncertain and '\nRequirements not verified; check availability at the trainer.' or '\nTrainerSpells catalogue; dismiss a rank to save it for later.')
                 A.Add(out,{key='train:spell:'..id,title=(uncertain and 'Check training: ' or 'Train: ')..name..(entry.rank and (' — Rank '..entry.rank) or ''),
                     detail=target.name..detail,
                     classSpell=true,trainerLocations=locations,
                     trainerDetail=detail,
-                    map=target.map,x=target.x,y=target.y,priority=25,spell=id,cost=cost,rank=entry.rank,spellName=name,verify=true})
+                    map=target.map,x=target.x,y=target.y,locationSource='TrainerSpells',priceConfidence=cost and 'catalogue' or 'unknown',requiredLevel=math.max(entry.level,tonumber(d.levelReq) or 0),priority=25,spell=id,cost=cost,rank=entry.rank,spellName=name,verify=true})
                 count=count+1
             end
         end

@@ -63,22 +63,25 @@ end
 -- Pickup remains in Orgrimmar; hand-in is Scooty in Booty Bay (map 1434).
 local turnInFallbacks={[2842]={1434,27.6,77.5,'Scooty'}}
 function A.QuestLocation(id,finish,map)
-    local pickupKnown=false
-    if not finish then
-        local p = Attune_Data and Attune_Data.questGivers and Attune_Data.questGivers[id]
-        if p then pickupKnown=true;if p[1]==map then return p[1],p[2],p[3],p[4],true end end
+    local points={};local hasDestination=false
+    local function add(m,x,y,name,source)
+        local point={map=m,x=x,y=y,name=name,locationSource=source}
+        if A.ValidDestination(point) then points[#points+1]=point;hasDestination=true end
     end
-    local by = read('Quest',id,finish and 'finishedBy' or 'startedBy')
-    local zones = module('ZoneDB')
-    local hasDestination=false
+    if not finish then
+        local p=Attune_Data and Attune_Data.questGivers and Attune_Data.questGivers[id]
+        if type(p)=='table' then add(p[1],p[2],p[3],p[4],'Attune') end
+    end
+    local by=read('Quest',id,finish and 'finishedBy' or 'startedBy')
+    local zones=module('ZoneDB')
     if type(by)=='table' and zones and zones.GetUiMapIdByAreaId then
         for index,kind in ipairs({'Npc','Object'}) do
             for _,giver in ipairs(by[index] or {}) do
-                for area,points in pairs(read(kind,giver,'spawns') or {}) do
-                    local ui = A.Safe('area to map',zones.GetUiMapIdByAreaId,zones,area)
-                    if ui and points[1] then
-                        hasDestination=true
-                        if ui==map then return ui,points[1][1],points[1][2],read(kind,giver,'name'),true end
+                local name=read(kind,giver,'name')
+                for area,spawns in pairs(read(kind,giver,'spawns') or {}) do
+                    local ui=A.Safe('area to map',zones.GetUiMapIdByAreaId,zones,area)
+                    for _,point in ipairs(type(spawns)=='table' and spawns or {}) do
+                        if type(point)=='table' then add(ui,point[1],point[2],name,'QuestieDB') end
                     end
                 end
             end
@@ -86,9 +89,11 @@ function A.QuestLocation(id,finish,map)
     end
     if finish and not hasDestination then
         local p=turnInFallbacks[id]
-        if p and p[1]==map then return p[1],p[2],p[3],p[4],true end
+        if p then add(p[1],p[2],p[3],p[4],'OLT curated locations') end
     end
-    return nil,nil,nil,nil,hasDestination or pickupKnown
+    local selected=A.SelectDestination(points,map)
+    if selected then return selected.map,selected.x,selected.y,selected.name,true,points,selected.locationSource end
+    return nil,nil,nil,nil,hasDestination
 end
 function A.IsGrayQuest(id)
     local level=tonumber(read('Quest',id,'questLevel'))
@@ -307,7 +312,7 @@ function A.AttuneRows(out,map)
                 local allow=finish and A.QuestReady(id) or (not finish and eligible(id))
                 local hint=not finish and allow==nil and ready and not A.QuestActive(id) and not A.QuestDone(id)
                 local accepted=finish and allow or (not finish and (allow==true or hint))
-                local m,x,y,npc,knownLocation=A.QuestLocation(id,finish,map)
+                local m,x,y,npc,knownLocation,destinations=A.QuestLocation(id,finish,map)
                 -- A chain's general LOCATION is only a weak pickup hint. Never
                 -- override a known giver elsewhere, or use it for a hand-in.
                 local localHint=not finish and not m and not knownLocation and matchesMap(step.LOCATION,map)
@@ -319,6 +324,8 @@ function A.AttuneRows(out,map)
                     A.Add(out,{key='quest:'..id..(finish and ':end' or ':start'),
                         title=(finish and 'Chain turn-in: ' or (hint and 'Check pickup: ' or 'Pick up: '))..questName(id),
                         detail=(chain.NAME or aid)..' | '..(npc or step.LOCATION or '')..'\nAttune chain'..(hint and '; availability not verified' or ''),
+                        destinations=destinations,destinationName='Quest giver',destinationPrefix=(chain.NAME or aid)..' | ',
+                        destinationSuffix='\nAttune chain'..(hint and '; availability not verified' or ''),
                         priority=chain.CLASS and 5 or (finish and 10 or 20),
                         map=m or map,x=x,y=y,quest=id,finish=finish,gray=gray,importantReason=importantReason,attuneStep=step,chainName=chain.NAME,
                         dungeonPickup=not finish and A.IsDungeonChain(chain),classQuest=chain.CLASS and chain.CLASS~='',
@@ -336,9 +343,9 @@ function A.TurnInRows(out,map)
         local info=A.Safe('quest log row',C_QuestLog.GetInfo,i)
         local id=info and info.questID
         if id and id>0 and A.QuestReady(id) then
-            local m,x,y,npc=A.QuestLocation(id,true,map)
+            local m,x,y,npc,_,destinations=A.QuestLocation(id,true,map)
             if m then A.Add(out,{key='quest:'..id..':end',title='Turn in: '..(info.title or questName(id)),
-                detail=(npc or 'Quest giver')..' | Completed quest in your log',map=m,x=x,y=y,quest=id,finish=true,priority=10}) end
+                detail=(npc or 'Quest giver')..' | Completed quest in your log',destinations=destinations,destinationName='Quest giver',destinationSuffix=' | Completed quest in your log',map=m,x=x,y=y,quest=id,finish=true,priority=10}) end
         end
     end
 end
@@ -367,7 +374,7 @@ function A.ProfessionPlans()
                     if not p then
                         p={skillLineID=id,name=name,rank=rank,maxRank=cap};list[#list+1]=p;byID[id]=p
                     else
-                        p.maxRank=cap -- native cap also completes a just-learned rank immediately
+                        p.rank=rank;p.maxRank=cap -- native state is authoritative; keep copied route metadata
                     end
                 elseif not good then native=false end
             end
@@ -413,25 +420,21 @@ function A.LocalProfessionTrainer(profession,map)
     local nextRank=math.floor(profession.maxRank/75)+1
     local side=UnitFactionGroup('player')=='Horde' and 'H' or 'A'
     local locale=GetLocale and GetLocale() or 'enUS'
-    local scope=A.scope or {};local px,py=scope.x or .5,scope.y or .5
-    local best,distance
-    local candidates={}
+    local destinations={}
+    local candidates={};local fromFallback={}
     local seen={}
     for _,trainer in ipairs(trainers) do candidates[#candidates+1]=trainer;if trainer.npcID then seen[trainer.npcID]=true end end
-    for _,trainer in ipairs(fallback or {}) do if not seen[trainer.npcID] then candidates[#candidates+1]=trainer end end
+    for _,trainer in ipairs(fallback or {}) do if not seen[trainer.npcID] then candidates[#candidates+1]=trainer;fromFallback[trainer]=true end end
     for _,trainer in ipairs(candidates) do
         if (trainer.rank or 0)>=nextRank and type(trainer.faction)=='string' and trainer.faction:find(side,1,true) then
             for _,location in ipairs(trainer.locations or {}) do
                 if location.uiMapID==map and location.x and location.y and A.Nearby(map,location.x,location.y) then
-                    local d=(location.x/100-px)^2+(location.y/100-py)^2
-                    if not distance or d<distance then
-                        distance=d;best={map=map,x=location.x,y=location.y,name=(trainer.names or {})[locale] or (trainer.names or {}).enUS or 'Trainer'}
-                    end
+                    destinations[#destinations+1]={map=map,x=location.x,y=location.y,name=(trainer.names or {})[locale] or (trainer.names or {}).enUS or 'Trainer',locationSource=fromFallback[trainer] and 'OLT curated locations' or 'TrainerSpells'}
                 end
             end
         end
     end
-    return best
+    return A.SelectDestination(destinations,map)
 end
 -- These rank quests are progression gates, independent of crafting routes.
 -- Sources: Wowhead Forever and WoW-Professions guides, checked 2026-11-21.
@@ -476,15 +479,15 @@ local function rankQuestRow(out,p,map)
     local finish=A.QuestReady(q.id)
     if A.QuestActive(q.id) and not finish then return false end
     if not finish and eligible(q.id)==false then return false end
-    local m,x,y,npc,known=A.QuestLocation(q.id,finish,map)
-    if not m and not known and q.map==map then m,x,y,npc=q.map,q.x,q.y,q.name end
+    local m,x,y,npc,known,_,locationSource=A.QuestLocation(q.id,finish,map)
+    if not m and not known and q.map==map then m,x,y,npc,locationSource=q.map,q.x,q.y,q.name,'OLT curated locations' end
     if not m or not A.Nearby(m,x,y) then return false end
     for _,row in ipairs(out) do if row.quest==q.id and not not row.finish==not not finish then return true end end
     if A.ReminderHidden({key='rank:'..p.skillLineID..':'..q.id,quest=q.id}) then return true end
     A.Add(out,{key='quest:'..q.id..(finish and ':end' or ':start'),quest=q.id,finish=finish,
         title=p.name..': '..A.Translate(finish and 'Turn in rank quest' or 'Pick up rank quest'),
         detail=(npc or q.name)..'\n'..A.Translate('Next skill cap')..': 300'..'\n'..(A.ProfessionRankRequirementText(p) or ''),
-        map=m,x=x,y=y,professionID=p.skillLineID,profession=p.name,professionRank=true,capMax=225,
+        locationSource=locationSource,map=m,x=x,y=y,professionID=p.skillLineID,profession=p.name,professionRank=true,capMax=225,
         priority=12,verify=true,why='Profession rank progression: '..p.name})
     return true -- covered even when skipped/ignored; never replace it with a cap warning
 end
@@ -503,7 +506,7 @@ local function annoraRow(out,p,map)
     A.Add(out,{key='rank:333:225',title=p.name..': '..A.Translate('Train next profession rank'),
         detail=A.Translate('Annora is inside Uldaman. This pin marks the entrance, not the trainer.')..'\n'..A.Translate('Next skill cap')..': 300'..'\n'..(A.ProfessionRankRequirementText(p) or ''),
         why=A.Translate('Train Artisan Enchanting during this Uldaman visit.'),
-        map=map,x=best[1],y=best[2],professionID=333,profession=p.name,professionRank=true,capMax=225,priority=12,verify=true})
+        locationSource='OLT curated locations',map=map,x=best[1],y=best[2],professionID=333,profession=p.name,professionRank=true,capMax=225,priority=12,verify=true})
     return true
 end
 function A.ProfessionRows(out,map,travel)
@@ -520,8 +523,8 @@ function A.ProfessionRows(out,map,travel)
         local covered=rankQuestRow(out,p,map) or annoraRow(out,p,map)
         local hasBook=A.coveredBooks and A.coveredBooks[p.skillLineID]
         for _,r in ipairs(out) do if r.criticalBook and r.professionID==p.skillLineID then hasBook=true end end
-        if not hasBook and not localRank and not covered and p.rank and p.maxRank and p.maxRank>0 and p.maxRank<300 and p.rank>=p.maxRank-10 then
-            A.Add(out,{key='cap:'..p.skillLineID,capMax=p.maxRank,professionID=p.skillLineID,profession=p.name,title=p.name..': '..p.rank..' / '..p.maxRank,
+        if A.db.showCapWarnings~=false and not hasBook and not localRank and not covered and p.rank and p.maxRank and p.maxRank>0 and p.maxRank<300 and p.rank>=p.maxRank-10 then
+            A.Add(out,{key='cap:'..p.skillLineID,informational=true,capMax=p.maxRank,professionID=p.skillLineID,profession=p.name,title=p.name..': '..p.rank..' / '..p.maxRank,
                 detail=capWarningDetail(p),requiredSkill=select(1,A.ProfessionRankRequirements(p)),requiredLevel=select(2,A.ProfessionRankRequirements(p)),priority=30})
         end
         for i,step in ipairs(p.steps or {}) do
@@ -565,7 +568,7 @@ function A.ProfessionRows(out,map,travel)
             A.Add(out,{key='rank:'..p.skillLineID..':'..p.maxRank,
                 title=p.name..': '..A.Translate('Train next profession rank'),
                 detail=localRank.name..' | '..A.Translate('price unknown')..'\n'..A.Translate('Next skill cap')..': '..cap..'\n'..(A.ProfessionRankRequirementText(p) or ''),
-                map=localRank.map,x=localRank.x,y=localRank.y,professionID=p.skillLineID,profession=p.name,
+                locationSource=localRank.locationSource,map=localRank.map,x=localRank.x,y=localRank.y,professionID=p.skillLineID,profession=p.name,
                 professionRank=true,capMax=p.maxRank,priority=12,verify=true,why='Profession rank progression: '..p.name})
         end
     end
@@ -663,7 +666,7 @@ function A.AddSupplyReminder(out,id,rule,map,travel,ammo)
                 detail=first..'\nBuy '..estimate.buy..' | '..(estimate.exact and '' or '~')..unit..' | '..(estimate.exact and '' or '~')..A.FormatMoney(estimate.cost)..' total'
             else detail=first..'\nNeed '..estimate.missing..' | Price unknown until a merchant visit' end
             A.Add(out,{key=ammo and ammo.key or ('supply:'..id),ammoItem=ammo and id,ammoKind=ammo and ammo.ammoKind,inventoryWarning=true,emptyEssential=count==0 and (ammo~=nil or (id==17030 and select(2,UnitClass('player'))=='SHAMAN')),title='Restock '..A.ItemName(id)..': '..count..' / '..rule.target,
-                detail=detail,map=vendor and vendor.map,x=vendor and vendor.x,y=vendor and vendor.y,priority=8})
+                detail=detail,cost=estimate.cost,priceConfidence=estimate.cost and (estimate.exact and 'observed' or 'estimate') or 'unknown',locationSource=vendor and vendor.source,map=vendor and vendor.map,x=vendor and vendor.x,y=vendor and vendor.y,priority=8})
         end
     end
 end
@@ -783,7 +786,7 @@ function A.TrainerRows(out,map)
                 elseif not learned then
                     local price=A.FormatMoney(service.cost)
                     A.Add(out,{key='train:'..key,spell=service.spell,cost=service.cost,professionID=service.professionID,profession=service.profession,title='Training: '..serviceName..(service.rank~='' and (' '..(service.rank or '')) or ''),
-                        detail=trainerName..' | '..price..'\nAvailable at last visit; revisit to verify current status.',map=map,x=entry.x,y=entry.y,priority=25,verify=true})
+                        detail=trainerName..' | '..price..'\nAvailable at last visit; revisit to verify current status.',locationSource='Your trainer observations',priceConfidence='observed',map=map,x=entry.x,y=entry.y,priority=25,verify=true})
                 end
             end
         end

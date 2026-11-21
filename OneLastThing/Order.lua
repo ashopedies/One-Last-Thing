@@ -49,6 +49,7 @@ function A.SortReminders(rows)
 end
 function A.DistanceText(row)
     if row.distanceYards then return '~'..(math.floor(row.distanceYards/10+.5)*10)..' '..A.Translate('yd') end
+    if row.rangeApproximate then return A.Translate('Approximate range') end
     if row.map and row.x and row.y then return A.Translate('Distance unknown') end
     return ''
 end

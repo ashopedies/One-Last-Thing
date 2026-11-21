@@ -97,3 +97,22 @@ Profession requirements (0.14.18):
 - At level 20 near the appropriate trainer, verify the actionable next-rank reminder replaces the general warning. Check that learning the new cap removes it.
 - Check another profession gate, an Expert book you cannot use yet, and a secondary-profession Artisan quest. Books may be bought ahead; unavailable quest pickups and training should stay hidden.
 - Repeat in German. Professions without character-level gates should not claim a level requirement.
+
+Neav themes (0.14.19):
+- In Appearance > Color theme, select Neav: Muted Moss alongside NeavFlare Muted Moss. Check green/gold text, Settings accent, all densities and transparency.
+- Select Current in NeavFlare (reload if requested), then Neav: Current in OLT. Check the matching native color family. Both palettes intentionally lift bar colors for text readability.
+- Verify existing Blizzard/Class Colors/Pop/Original selections and character settings are preserved.
+- Without NeavFlare/FlareUI, test both selections: the moss palette remains available and Current uses its fallback with no missing-provider warning.
+
+Review fixes (0.14.20):
+- With multiple valid quest givers/spawns, move between locations. Check reminder presence, NPC text and the destination selected by a new Map click. Existing pins remain owned by the task until completion or manual clearing.
+- Check nearest weapon, class and profession trainers; the list must not depend on which NPC is first in a database. Keep faction/class/level restrictions.
+- Gain skill across an upgrade threshold (e.g. 199 to 200). Confirm the native rank appears immediately even if the planner still shows the previous skill.
+- A missing trainer price should say Price unknown, a genuinely free spell should say 0c, and gold-shortage hints should apply only to known prices.
+- When world-coordinate conversion is unavailable, check Approximate range in the checklist and tooltips in EN/DE. Capitals stay city-wide.
+
+Explanations and cap advice (0.14.21):
+- Hover class training, supply, quest and profession rows in Default/Compact/Minimal. Check Why this reminder? source, reason, recorded-location disclaimer and price confidence in EN/DE.
+- Move between alternative quest destinations. The hover location source should follow the selected coordinates.
+- Under Professions, turn Show informational profession-cap warnings off. General near-cap advice should disappear; a valid local rank trainer, Artisan rank quest and buy-ahead book must remain eligible.
+- Reload to verify the per-character choice survives; another character defaults to showing cap advice.

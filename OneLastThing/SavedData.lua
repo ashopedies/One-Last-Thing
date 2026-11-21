@@ -62,7 +62,7 @@ function A.ValidateSavedData()
     for key,id in pairs(d.petFoodByDiet) do if type(key)~='string' or (id~=false and not finite(id)) then d.petFoodByDiet[key]=nil end end
     for key,id in pairs(d.vendorPoisons) do if type(key)~='string' or not finite(id) then d.vendorPoisons[key]=nil end end
     for key,spec in pairs({scale={1,.65,1.5},opacity={0,0,1},nearbyRadius={850,250,2000},completionDelay={10,5,60},fontScale={1,.8,1.3},repairThreshold={40,10,90},bagSlots={4,0,20}}) do d[key]=number(d[key],unpack(spec)) end
-    for _,key in ipairs({'auto','arrival','travel','showEmpty','collapsed','attuneAllChains','nearbyOnly','importantVendorBuys','categoryMigration','trashMigration','supplyControlsV2'}) do if d[key]~=nil and type(d[key])~='boolean' then d[key]=nil end end
+    for _,key in ipairs({'showCapWarnings','auto','arrival','travel','showEmpty','collapsed','attuneAllChains','nearbyOnly','importantVendorBuys','categoryMigration','trashMigration','supplyControlsV2'}) do if d[key]~=nil and type(d[key])~='boolean' then d[key]=nil end end
     for _,key in ipairs({'theme','headerPosition','fontFace','fontShadow','fontOutline','rowMode','collapseMode'}) do if d[key]~=nil and type(d[key])~='string' then d[key]=nil end end
     local size=ensure(d,'size');size.width=number(size.width,440,360,950);size.height=number(size.height,320,230,850)
     local anchors={CENTER=true,TOP=true,BOTTOM=true,LEFT=true,RIGHT=true,TOPLEFT=true,TOPRIGHT=true,BOTTOMLEFT=true,BOTTOMRIGHT=true}

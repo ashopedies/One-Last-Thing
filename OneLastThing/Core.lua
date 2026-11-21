@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.18'
+A.version = '0.14.22'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
@@ -29,6 +29,7 @@ function A.Init()
         end
     end
     d.sources = d.sources or {}
+    if d.showCapWarnings==nil then d.showCapWarnings=true end
     if d.arrival == nil then d.arrival=true end
     if d.travel == nil then d.travel=true end
     if d.showEmpty == nil then d.showEmpty=true end
@@ -150,6 +151,7 @@ function A.ReminderHidden(row)
 end
 function A.Add(out, row)
     if not row or not row.key then return end
+    if A.activeProvider then row.provider=A.activeProvider end
     if A.captureProvider then
         row.priority=row.priority or 50
         for _,old in ipairs(out) do if old.key==row.key then return end end

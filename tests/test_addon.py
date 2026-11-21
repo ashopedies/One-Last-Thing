@@ -2081,3 +2081,12 @@ run_ui_polish()
 
 from test_rank_requirements import run as run_rank_requirements
 run_rank_requirements()
+
+from test_neav_themes import run as run_neav_themes
+run_neav_themes()
+
+from test_review_fixes import run as run_review_fixes
+run_review_fixes()
+
+from test_explanations import run as run_explanations
+run_explanations()

@@ -103,6 +103,6 @@ function A.RepairRows(out,map)
     else detail=detail..' | Cost shown at the repair vendor' end
     A.Add(out,{key='repair:equipment',repair=true,title='Repair gear: lowest item '..math.floor(lowest*100+.5)..'%',
         detail=detail..'\nEquipped gear below '..(A.db.repairThreshold or 40)..'% durability. Repair manually at the vendor.',
-        map=vendor.map,x=vendor.x,y=vendor.y,priority=7,brokenGear=lowest==0})
+        locationSource=vendor.npc and 'QuestieDB' or 'Your vendor observations',cost=A.liveRepairCost,priceConfidence=A.liveRepairCost and 'observed' or 'unknown',map=vendor.map,x=vendor.x,y=vendor.y,priority=7,brokenGear=lowest==0})
     A.status.Repairs='Nearby repair vendor found'
 end

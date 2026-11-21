@@ -36,12 +36,12 @@ local function title(id,q)
     return name or q.name or ('Quest '..id)
 end
 local function location(id,q,d,map)
-    local m,x,y,npc,known=A.QuestLocation(id,false,map)
-    if m or known then return m,x,y,npc,known end
+    local m,x,y,npc,known,points,source=A.QuestLocation(id,false,map)
+    if m or known then return m,x,y,npc,known,points,source end
     local point=q.startMap or (d.QUEST_START_MAPS and d.QUEST_START_MAPS[id]) or q.map
     if type(point)=='table' and point.mapID==map and type(point.x)=='number' and type(point.y)=='number'
         and point.x>=0 and point.x<=1 and point.y>=0 and point.y<=1 then
-        return map,point.x*100,point.y*100,point.targetName or point.label,false
+        return map,point.x*100,point.y*100,point.targetName or point.label,false,nil,'DungeonJournal'
     end
 end
 function A.DungeonJournalRows(out,map)
@@ -86,7 +86,7 @@ function A.DungeonJournalRows(out,map)
                     and not candidate.repeatable and not A.QuestDone(id) and not A.QuestActive(id)
                     and factionAndClass(candidate,side,class,professions)
                     and (not tonumber(candidate.requires) or tonumber(candidate.requires)<=level) then
-                    local m,x,y,npc,verified=location(id,candidate,d,map)
+                    local m,x,y,npc,verified,destinations,locationSource=location(id,candidate,d,map)
                     if m and x and y then
                         local available=A.QuestEligible and A.QuestEligible(id)
                         if available==nil then
@@ -98,6 +98,7 @@ function A.DungeonJournalRows(out,map)
                                 local name=title(id,candidate)
                                 A.Add(out,{key='quest:'..id..':start',quest=id,title='Pick up: '..name,
                                     detail=(npc or candidate.pickup or 'Quest giver')..' | '..dungeonName..'\nDungeonJournal',
+                                    locationSource=locationSource,destinations=destinations,destinationName=candidate.pickup or 'Quest giver',destinationSuffix=' | '..dungeonName..'\nDungeonJournal',
                                     map=m,x=x,y=y,questLevel=tonumber(candidate.level),dungeonJournal=true,dungeonPickup=true,verify=not verified,
                                     gray=isGray,importantReason=important and ('Grey prerequisite — leads to level '..tostring(q.level or '?')..' '..title(finalID,q)) or nil,
                                     why='Pick up before entering the dungeon: '..dungeonName,priority=20})

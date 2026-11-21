@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.14.22 — 2026-11-21
+
+- Give Neav: Muted Moss clearer gold, moss-green and ivory separation instead of similarly pale gold/green shades.
+- Use moss green for the header, ivory for ordinary quest/class-training text, and gold for action/Settings accents and important warnings. Keep exactly three foreground colors.
+- Preserve the selected theme and all other palettes, layouts and reminder behavior. Update existing theme regression coverage for the distinct color roles.
+
+## 0.14.21 — 2026-11-21
+
+- Add a Why this reminder? section to row-hover tooltips in all three layouts. Explain the reminder source, reason, known level/skill requirements, location evidence and price confidence without adding row buttons.
+- Preserve quest-location provenance when cached destinations change. Identify recorded database/curated coordinates and past observations without implying a live NPC check; distinguish catalogue, observed, estimated and unknown prices.
+- Add Show informational profession-cap warnings under Settings > Professions. It is saved per character and remains on by default for existing behavior. Disabling it hides generic cap advice only; local rank trainers, rank quests and buy-ahead books retain their own checks/settings.
+- Add English/German strings and regression coverage for hover explanations, changing provenance, price evidence, actual settings interaction and character persistence.
+
+## 0.14.20 — 2026-11-21
+
+- Select the nearest valid current-map quest giver, object or spawn rather than stopping at the first database point. Preserve separate pickup/hand-in sources, known destinations on other maps and curated hand-in fallbacks.
+- Keep candidate destinations in cached Attune, DungeonJournal, ordinary hand-in and weapon rows. Movement reselects a destination and NPC label without rescanning databases or mutating displayed/cached templates.
+- Use the shared world-distance selection for class/profession trainers and weapon masters; retain faction, class, level, rank and radius restrictions.
+- Prefer current native profession rank and cap together when SkillUp's cached values disagree, while retaining copied route metadata and leaving the source addon's data unchanged.
+- Display unknown class/weapon training prices as unknown, preserving real zero-cost entries and safe affordability checks.
+- Label map-coordinate radius fallback as Approximate range in English/German, with an explanation in reminder tooltips and diagnostics. Exact world-coordinate distances and city-wide behavior remain distinct.
+- Add regression cases for multiple destinations, cached movement, source conflicts, unknown/free prices, fallback labels and real-world distance ranking.
+
+## 0.14.19 — 2026-11-21
+
+- Add Neav: Current and Neav: Muted Moss under Appearance > Color theme, alongside all existing choices. Existing character selections remain unchanged.
+- Match the attached NeavFlare 0.6.56 moss/ochre hues using brighter versions for transparent checklist text. New themes retain three foreground colors, a distinct Settings accent and existing background controls.
+- Neav: Current reads the active FlareUI cast/friendly palette without modifying it, with a green/gold fallback when absent. Choose Current in NeavFlare for that pairing; Current in the source addon deliberately inherits its native palette rather than defining fixed colors.
+- Add optional load ordering for FlareUI/NeavFlare and a one-time Current-theme refresh after login readiness. Neither addon is required; no runtime palette polling or new reminder behavior.
+- Verify English/German startup, theme switches, persistence, selected fonts, optional/malformed providers, source immutability and the three-color limit.
+
 ## 0.14.18 — 2026-11-21
 
 - Show known character-level and profession-skill requirements in near-cap warnings across all twelve professions, including trainer ranks, Expert books and Artisan progression quests. Explain the current skill cap without claiming a local trainer exists.
