@@ -9,11 +9,11 @@ A.panels=setmetatable({},{__mode='k'})
 -- Each theme has exactly three foreground colors. Muted text changes only
 -- opacity, never introduces an extra RGB shade outside this palette.
 A.themeNames={blizzard='Blizzard',class='Class Colors',pop='Pop',original='Original'}
-A.toneSlots={brand=1,quests=1,training=1,warning=1,urgent=1,
+A.toneSlots={settings=1,brand=1,quests=1,training=1,warning=1,urgent=1,
     professions=2,supplies=2,action=2,success=2,
     errands=3,text=3,muted=3,dismiss=3,snooze=3}
 A.originalColors={
-    text={.76,.82,.87},muted={.53,.64,.70},brand={.94,.74,.42},
+    settings={.75,.63,.94},text={.76,.82,.87},muted={.53,.64,.70},brand={.94,.74,.42},
     quests={.96,.77,.38},professions={.40,.83,.65},training={.75,.63,.94},
     supplies={.35,.78,.92},errands={.48,.67,.85},action={.34,.76,.98},
     dismiss={.76,.55,.55},snooze={.66,.61,.82},success={.43,.87,.56},

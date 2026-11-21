@@ -34,6 +34,7 @@ There are no hard addon dependencies. Coverage depends on the data providers ins
 | --- | --- |
 | Attune | Unfinished quest chains, including class, dungeon and access chains |
 | Questie / QuestieDB | Quest prerequisites, NPC locations, vendors and repair locations |
+| DungeonJournal | Optional extra dungeon quest pickups and prerequisite steps; off by default |
 | SkillUp Forever | Profession state and rank/cap reminders; not changing recipe shopping lists |
 | TrainerSpells | Class spell ranks, city-specific Mage portal trainers, weapon skills and profession rank-trainer locations |
 | NeavMedia | Optional fonts/media |
@@ -43,11 +44,29 @@ The bottom settings section shows the actual loaded/available status. No other a
 
 Ordinary quest turn-ins are **off by default**, leaving regular questing to your quest tracker. To opt in, enable **Filter > Quests & chains > Other completed quests**. Turn-ins belonging to tracked important chains remain available independently. Explicit character choices are preserved across updates.
 
+## Optional DungeonJournal support
+
+In **Settings > Quests & chains**, enable **DungeonJournal dungeon quests (optional)**.
+This character-specific option defaults off and supplements Attune. It requires the installed
+DungeonJournal addon and Questie's quest eligibility data. Available local pickups and required
+prerequisite steps are deduplicated with Attune by quest ID and follow the usual range,
+class/profession/faction, level, completion and Skip/Ignore rules. Ordinary gray quests,
+item-start tasks and unfinished hub placeholders are excluded. A gray prerequisite is shown
+only when it leads to a relevant non-gray dungeon quest, with an explanation.
+
+The adapter reads the installed data without changing DungeonJournal preferences or bundling
+its database/assets. Tested against DungeonJournal 2.1.2 (Interface 16001). Unsupported/missing
+data is reported when this source is enabled. Automatic instance suppression is unchanged.
+
 ## Profession progression
 
-The shared rank-reminder path supports all twelve professions: Alchemy, Blacksmithing, Enchanting, Engineering, Herbalism, Leatherworking, Mining, Skinning, Tailoring, First Aid, Cooking and Fishing. Reminders follow professions currently learned by your character. SkillUp supplies rank steps; installed TrainerSpells data can supply rank-capable local trainers. Books and quest ranks retain their own sources.
+Routine profession recipes are not checklist tasks, including recipes offered by trainers you have visited. Rank upgrades, key books and progression quests remain available. The two First Aid bandage manuals are a curated exception, grouped as one vendor stop. Class spells still have individual Skip/Ignore controls for gold decisions.
 
-The three curated Expert rank books (First Aid, Cooking and Fishing) can be suggested before you can use them, with required/current skill and character level clearly shown. Only affordable known local offers are suggested; owned/banked copies and learned caps are excluded. At most two book reminders appear. Other professions do not get invented book purchases.
+The shared rank-reminder path supports all twelve professions: Alchemy, Blacksmithing, Enchanting, Engineering, Herbalism, Leatherworking, Mining, Skinning, Tailoring, First Aid, Cooking and Fishing. Reminders follow professions currently learned by your character. Native character data fills professions absent from SkillUp's crafting routes. Rank upgrades, the three Artisan progression quests and Expert books are checked independently of the next recipe steps; SkillUp remains an optional source of route information. Installed TrainerSpells data supplies rank-capable local trainers.
+
+The three curated Expert rank books (First Aid, Cooking and Fishing) can be suggested before you can use them, with required/current skill and character level clearly shown. Only affordable known local offers are suggested; owned/banked copies and learned caps are excluded. At most two book/vendor reminders appear. Heavy Silk and Mageweave Bandage manuals form one additional eligible group from First Aid 125, excluding owned/banked or learned manuals. This is optional for the bandage route; it can be skipped or ignored as a group. Other professions do not get invented book purchases.
+
+Eligible Enchanters (skill 200/225, character level 35+) get an Annora reminder near Uldaman's exterior approaches. Its pin marks the entrance; automatic checklists remain suppressed inside instances.
 
 Dungeon, class, raid/access and profession progression reminders explain their purpose. The explanation follows installed data and does not promise an unrecorded reward. Hover any reminder for its full reason and destination details.
 
@@ -80,7 +99,13 @@ New to GitHub? Start with [GITHUB-START.md](docs/GITHUB-START.md). This project 
 ```sh
 python3 -m pip install -r requirements-dev.txt
 python3 tests/test_addon.py
-python3 tools/package.py --version 0.14.10
+python3 tools/package.py --version 0.14.18
 ```
 
 The install ZIP is written to `dist/`. It contains the addon and readable changelog. Tests simulate WoW APIs; they do not replace testing in the game. For a bug report, include client language, location, `/olt status`, reproduction steps and any BugSack error.
+
+
+Supply reminders use the **Supplies** parent checkbox and individual item
+checkboxes beside their saved targets. Unchecking an item keeps its target for
+later. Quest settings follow the same parent then child layout, including the
+optional DungeonJournal source.

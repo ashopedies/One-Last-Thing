@@ -86,7 +86,6 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Hidden reminders & help | Ausgeblendete Hinweise & Hilfe |
 | Hide for 30m | 30 Min. Pause |
 | Hunter ammunition | Jägermunition |
-| I have Reagent Economy (hide class reagent checks) | Ich habe „Reagent Economy“ (Klassenreagenzien ausblenden) |
 | Ignored reminders | Ignorierte Hinweise |
 | Ignored reminders are managed separately below. | Ignorierte Hinweise werden getrennt verwaltet. |
 | Ignored — re-enable to show | Ignoriert – zum Anzeigen wieder aktivieren |
@@ -153,7 +152,6 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Quest turn-ins | Questabgaben |
 | Quests | Quests |
 | Quests & chains | Quests & Questreihen |
-| Reagent Economy enabled | Reagent Economy aktiviert |
 | Recorded Forever seller | Erfasster Forever-Händler |
 | Recorded seller (patrols nearby) | Erfasster Händler (patrouilliert in der Nähe) |
 | Refresh the checklist for your current location. Does not restore hidden reminders, purchase items or learn spells. | Aktualisiert die Liste für deinen aktuellen Ort. Ausgeblendete Hinweise bleiben ausgeblendet; es wird nichts gekauft oder gelernt. |
@@ -240,3 +238,21 @@ Native names come from the game or installed databases. Stock amount is **Sollbe
 | Portal trainer | Portallehrer |
 | Portal-trainer data unavailable | Daten zu Portallehrern nicht verfügbar |
 | Do not remind again. Restore in Settings > Ignored reminders. | Nicht mehr erinnern. Unter Einstellungen > Ignorierte Hinweise wiederherstellen. |
+
+| Profession recipes excluded; rank upgrades use profession progression checks | Berufsrezepte ausgeblendet; Berufsstufen werden über die Fortschrittsprüfung erfasst |
+
+| Next skill cap | Neue maximale Fertigkeit |
+
+| Pick up rank quest | Quest für die nächste Berufsstufe annehmen |
+| Bandage manuals | Verbandhandbücher |
+| Requires | Benötigt |
+| Optional for the bandage route. Buy here to avoid another trip. | Optional für den Fortschritt mit Verbänden. Hier kaufen, um eine weitere Reise zu vermeiden. |
+| Annora is inside Uldaman. This pin marks the entrance, not the trainer. | Annora ist in Uldaman. Diese Markierung zeigt den Eingang, nicht die Lehrerin. |
+| Train Artisan Enchanting during this Uldaman visit. | Bei diesem Uldamanbesuch die Verzauberkunst bis 300 freischalten. |
+
+| DungeonJournal dungeon quests (optional) | DungeonJournal-Dungeonquests (optional) |
+| DungeonJournal dungeon quests | DungeonJournal-Dungeonquests |
+| DungeonJournal data unavailable or unsupported | DungeonJournal-Daten fehlen oder werden nicht unterstützt |
+| Optional: extra local dungeon quest pickups; enable under Quests & chains. | Optional: zusätzliche Dungeonquests vor Ort; unter Quests & Questreihen aktivieren. |
+
+| Chain turn-in: QUEST | Kettenquest abgeben: QUEST |

@@ -1,7 +1,7 @@
 local _,A=...
 function A.MakeTrashRecord(row)
     local r={hiddenAt=time()}
-    for _,field in ipairs({'key','title','detail','quest','spell','professionID','profession','map','x','y','category','subcategory','subcategoryName','importantReason','cost','rank','spellName','weapon','flight','capMax','criticalBook','buyItem','why','buyAhead'}) do
+    for _,field in ipairs({'key','title','detail','quest','spell','professionID','profession','map','x','y','category','subcategory','subcategoryName','importantReason','cost','rank','spellName','weapon','flight','capMax','criticalBook','dungeonJournal','firstAidManuals','buyItem','why','buyAhead'}) do
         local v=row[field]
         if type(v)=='string' or type(v)=='number' or type(v)=='boolean' then r[field]=v end
     end
@@ -56,15 +56,19 @@ local function knownClassRanks()
     end
     return ranks
 end
-local function isLearned(r,ranks)
+local function isLearned(r,getRanks)
     if not r.spell then return false end
     if A.SpellKnown(r.spell) then return true end
-    if r.spellName and r.rank and (ranks[r.spellName] or 0)>=r.rank then return true end
+    if r.spellName and r.rank and (getRanks()[r.spellName] or 0)>=r.rank then return true end
     local info=C_TradeSkillUI and A.Safe('trashed recipe learned',C_TradeSkillUI.GetRecipeInfo,r.spell)
     return info and info.learned==true
 end
 function A.TrashEntries()
-    local entries={};local skills,certain=professions();local ranks=knownClassRanks()
+    local entries={};local skills,certain=professions();local ranks
+    local function getRanks()
+        if not ranks then ranks=knownClassRanks() end
+        return ranks
+    end
     for key,value in pairs(A.db.trash) do
         if value then
             local r=record(key,value);local score,reason=500,'Other hidden reminder'
@@ -75,7 +79,8 @@ function A.TrashEntries()
             end
             if gray then score,reason=10000,'Grey quest — lowest priority'
             elseif r.quest and A.QuestDone(r.quest) then score,reason=8000,'Quest already completed'
-            elseif isLearned(r,ranks) then score,reason=7000,'Already learned'
+            elseif r.firstAidManuals and A.FirstAidManualsMissing and #A.FirstAidManualsMissing()==0 then score,reason=7000,'Already learned'
+            elseif isLearned(r,getRanks) then score,reason=7000,'Already learned'
             elseif r.professionID then
                 local p=skills[r.professionID]
                 if p and r.capMax and p.maxRank and (p.maxRank>r.capMax or (r.criticalBook and p.maxRank>=r.capMax)) then score,reason=7000,'Profession rank already surpassed'

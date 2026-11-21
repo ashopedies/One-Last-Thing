@@ -1,7 +1,7 @@
 local _, A = ...
 local events=CreateFrame('Frame');A.eventFrame=events
 local queued=false
-local merchantDirty,trainerDirty
+local merchantDirty,trainerDirty,settingsDirty
 local ready=false
 local function schedule(reason,show)
     if show or not A.scheduledShow then A.scheduledReason=reason end
@@ -15,6 +15,10 @@ local function schedule(reason,show)
             A.Safe('observe merchant',A.ObserveMerchant);A.Safe('observe repair vendor',A.ObserveRepairMerchant);A.Safe('important vendor offers',A.ObserveImportantMerchant)
         end
         if trainerDirty then trainerDirty=nil;A.Safe('observe trainer',A.ObserveTrainer) end
+        if settingsDirty then
+            settingsDirty=nil
+            if A.settings and A.settings:IsShown() then A.Safe('item settings',A.BuildSettings) end
+        end
         local r,s=A.scheduledReason,A.scheduledShow
         A.scheduledReason,A.scheduledShow=nil,nil
         A.Safe('refresh',A.Refresh,r,s)
@@ -107,7 +111,7 @@ events:SetScript('OnEvent',function(_,event,...)
         local id=...
         local selected=A.IsHunter() and A.HunterAmmoSelection()
         if A.db.supplies[id] or selected==id or (A.IsCriticalBook and A.IsCriticalBook(id)) then
-            if A.settings then A.settings.signature=nil;if A.settings:IsShown() then A.BuildSettings() end end
+            if A.settings then A.settings.signature=nil;settingsDirty=true end
             schedule('Updated',false)
         end
     elseif event=='QUEST_DATA_LOAD_RESULT' then

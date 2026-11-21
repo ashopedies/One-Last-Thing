@@ -163,6 +163,7 @@ local function eligible(id)
     end
     return nil -- Attune's current-step state is a hint, not proven quest availability.
 end
+A.QuestEligible=eligible
 -- A later quest proves its prerequisite steps are no longer pickups. This
 -- also suppresses unused OR breadcrumbs when another route was taken.
 function A.AttuneProgress(data,toon)
@@ -316,7 +317,7 @@ function A.AttuneRows(out,map)
                 if accepted and (m or localHint) then
                     count=count+1
                     A.Add(out,{key='quest:'..id..(finish and ':end' or ':start'),
-                        title=(finish and 'Turn in: ' or (hint and 'Check pickup: ' or 'Pick up: '))..questName(id),
+                        title=(finish and 'Chain turn-in: ' or (hint and 'Check pickup: ' or 'Pick up: '))..questName(id),
                         detail=(chain.NAME or aid)..' | '..(npc or step.LOCATION or '')..'\nAttune chain'..(hint and '; availability not verified' or ''),
                         priority=chain.CLASS and 5 or (finish and 10 or 20),
                         map=m or map,x=x,y=y,quest=id,finish=finish,gray=gray,importantReason=importantReason,attuneStep=step,chainName=chain.NAME,
@@ -341,20 +342,84 @@ function A.TurnInRows(out,map)
         end
     end
 end
--- The existing profession categories provide canonical keys for all twelve professions.
--- TrainerSpells supplies locations and which rank each trainer can teach; no recipe database is copied.
+-- Native state fills professions omitted by SkillUp's crafting plans. Copies only:
+-- never mutate another addon's API results or interpret recipe routes as rank eligibility.
+function A.ProfessionPlans()
+    local api=SkillUpForever and SkillUpForever.API
+    local plans=api and api.version==1 and api.Professions and A.Safe('SkillUp professions',api.Professions,{steps=25,recipes=1})
+    if type(plans)~='table' then plans=nil end
+    local list,byID={},{}
+    for _,p in ipairs(plans or {}) do
+        if type(p)=='table' and p.skillLineID then
+            local copy={};for key,value in pairs(p) do copy[key]=value end
+            list[#list+1]=copy;byID[p.skillLineID]=copy
+        end
+    end
+    local native=false
+    if GetProfessions and GetProfessionInfo then
+        local ok,a,b,c,d,e,f=pcall(GetProfessions)
+        if ok then
+            native=true
+            for _,index in pairs({a,b,c,d,e,f}) do
+                local good,name,_,rank,cap,_,_,id=pcall(GetProfessionInfo,index)
+                if good and id and name and type(rank)=='number' and type(cap)=='number' and cap>0 then
+                    local p=byID[id]
+                    if not p then
+                        p={skillLineID=id,name=name,rank=rank,maxRank=cap};list[#list+1]=p;byID[id]=p
+                    else
+                        p.maxRank=cap -- native cap also completes a just-learned rank immediately
+                    end
+                elseif not good then native=false end
+            end
+        end
+    end
+    if plans or native then return list end
+end
+-- Eligibility facts mirror verified rank requirements. Books and quest ranks
+-- use independent progression rules below. Skinning's disputed level gate is retained.
+local trainerRankRequirements={
+    [129]={{50,0}}, [185]={{50,10}}, [356]={{50,10}},
+    [164]={{50,10},{125,20},{200,35}}, [165]={{50,10},{125,20},{200,35}},
+    [171]={{50,10},{125,20},{200,35}}, [202]={{50,10},{125,20},{200,35}},
+    [333]={{50,10},{125,20},{200,35}}, [197]={{50,10},{125,20},{200,35}},
+    [182]={{50,0},{125,0},{200,0}}, [186]={{50,0},{125,0},{200,0}},
+    [393]={{50,0},{125,0},{200,35}},
+}
+-- Two high-rank trainers missing from the installed Forever trainer table.
+-- Rogvar: user-confirmed in Stonard; TrainerSpells Classic coordinates and
+-- Wowhead Forever Alchemy overview (checked 2026-11-21). Drakk: Classic trainer
+-- record, also listed by Forever guides; reminders remain marked for verification.
+local rankTrainerFallbacks={
+    Alchemy={{npcID=1386,rank=4,faction='H',names={enUS='Rogvar'},
+        locations={{uiMapID=1435,x=48.53,y=55.85}}}},
+    Leatherworking={{npcID=11097,rank=4,faction='A',names={enUS='Drakk Stonehand',deDE='Drakk Steinhand'},
+        locations={{uiMapID=1425,x=13.39,y=43.49}}}},
+}
+local function availableRank(p)
+    local ranks=trainerRankRequirements[p.skillLineID]
+    local index=p.maxRank and p.maxRank/75
+    local req=ranks and ranks[index]
+    if req and (p.rank or 0)>=req[1] and (UnitLevel('player') or 0)>=req[2] then
+        return p.maxRank+75
+    end
+end
 function A.LocalProfessionTrainer(profession,map)
     if not profession.maxRank or profession.maxRank<=0 or profession.maxRank>=300 then return end
     local key
     for _,category in ipairs(A.categories) do if category.id=='professions' then key=category.subs[tostring(profession.skillLineID)];break end end
     local trainers=key and TrainerSpellsProfessionTrainers and TrainerSpellsProfessionTrainers[key]
-    if type(trainers)~='table' then return end
+    local fallback=key and rankTrainerFallbacks[key]
+    if type(trainers)~='table' then trainers={} end
     local nextRank=math.floor(profession.maxRank/75)+1
     local side=UnitFactionGroup('player')=='Horde' and 'H' or 'A'
     local locale=GetLocale and GetLocale() or 'enUS'
     local scope=A.scope or {};local px,py=scope.x or .5,scope.y or .5
     local best,distance
-    for _,trainer in ipairs(trainers) do
+    local candidates={}
+    local seen={}
+    for _,trainer in ipairs(trainers) do candidates[#candidates+1]=trainer;if trainer.npcID then seen[trainer.npcID]=true end end
+    for _,trainer in ipairs(fallback or {}) do if not seen[trainer.npcID] then candidates[#candidates+1]=trainer end end
+    for _,trainer in ipairs(candidates) do
         if (trainer.rank or 0)>=nextRank and type(trainer.faction)=='string' and trainer.faction:find(side,1,true) then
             for _,location in ipairs(trainer.locations or {}) do
                 if location.uiMapID==map and location.x and location.y and A.Nearby(map,location.x,location.y) then
@@ -368,24 +433,102 @@ function A.LocalProfessionTrainer(profession,map)
     end
     return best
 end
+-- These rank quests are progression gates, independent of crafting routes.
+-- Sources: Wowhead Forever and WoW-Professions guides, checked 2026-11-21.
+local curatedRankQuestIDs={[6622]=true,[6624]=true,[6610]=true,[6607]=true}
+local rankQuests={
+    [129]={H={id=6622,map=1417,x=73.4,y=36.8,name='Doctor Gregory Victor'},
+           A={id=6624,map=1445,x=67.6,y=48.8,name='Doctor Gustaf VanHowzen'}},
+    [185]={id=6610,map=1446,x=52.6,y=28.0,name='Dirge Quikcleave'},
+    [356]={id=6607,map=1445,x=58.6,y=60.0,name='Nat Pagle'},
+}
+-- Shared explanatory facts for every known progression gate. These do not
+-- relax pickup/training eligibility or turn a general warning into a location.
+function A.ProfessionRankRequirements(p)
+    if not p or type(p.maxRank)~='number' then return end
+    if p.maxRank==150 and A.ProfessionRankBookRequirement then
+        local skill,level,cap=A.ProfessionRankBookRequirement(p.skillLineID)
+        if skill then return skill,level,cap end
+    end
+    if p.maxRank==225 and rankQuests[p.skillLineID] then return 225,35,300 end
+    local ranks=trainerRankRequirements[p.skillLineID]
+    local req=ranks and ranks[p.maxRank/75]
+    if req then return req[1],req[2],p.maxRank+75 end
+end
+function A.ProfessionRankRequirementText(p)
+    local skill,level=A.ProfessionRankRequirements(p)
+    if not skill then return end
+    local text=A.Translate('Requires')..' '..A.Translate(p.name or 'Profession')..' '..skill
+    -- Put the character gate first so it remains visible in a narrow row.
+    if level>0 then text=A.Translate('Requires level '..level)..' | '..text end
+    return text
+end
+local function capWarningDetail(p)
+    local text=A.ProfessionRankRequirementText(p)
+    if not text then return 'Near the current rank cap. Check the next rank in SkillUp before travelling. This is a general warning, not proof of a local trainer.' end
+    return text..'\n'..A.Translate('Current skill cap')..': '..p.maxRank..'. '..A.Translate('Local trainer not confirmed.')
+end
+local function rankQuestRow(out,p,map)
+    local q=rankQuests[p.skillLineID]
+    if not q then return false end
+    q=q.id and q or q[UnitFactionGroup('player')=='Horde' and 'H' or 'A']
+    if p.maxRank~=225 or (p.rank or 0)<225 or UnitLevel('player')<35 or A.QuestDone(q.id) then return false end
+    local finish=A.QuestReady(q.id)
+    if A.QuestActive(q.id) and not finish then return false end
+    if not finish and eligible(q.id)==false then return false end
+    local m,x,y,npc,known=A.QuestLocation(q.id,finish,map)
+    if not m and not known and q.map==map then m,x,y,npc=q.map,q.x,q.y,q.name end
+    if not m or not A.Nearby(m,x,y) then return false end
+    for _,row in ipairs(out) do if row.quest==q.id and not not row.finish==not not finish then return true end end
+    if A.ReminderHidden({key='rank:'..p.skillLineID..':'..q.id,quest=q.id}) then return true end
+    A.Add(out,{key='quest:'..q.id..(finish and ':end' or ':start'),quest=q.id,finish=finish,
+        title=p.name..': '..A.Translate(finish and 'Turn in rank quest' or 'Pick up rank quest'),
+        detail=(npc or q.name)..'\n'..A.Translate('Next skill cap')..': 300'..'\n'..(A.ProfessionRankRequirementText(p) or ''),
+        map=m,x=x,y=y,professionID=p.skillLineID,profession=p.name,professionRank=true,capMax=225,
+        priority=12,verify=true,why='Profession rank progression: '..p.name})
+    return true -- covered even when skipped/ignored; never replace it with a cap warning
+end
+local function annoraRow(out,p,map)
+    if p.skillLineID~=333 or p.maxRank~=225 or (p.rank or 0)<200 or UnitLevel('player')<35 or map~=1418 then return false end
+    -- Approximate cave approaches, not Annora's indoor position. Both entrances
+    -- are supported so players taking the shorter back route also get warned.
+    local best,dist
+    for _,point in ipairs({{44.2,12.2},{65.1,43.4}}) do
+        if A.Nearby(map,point[1],point[2]) then
+            local scope=A.scope or {};local d=((scope.x or .5)-point[1]/100)^2+((scope.y or .5)-point[2]/100)^2
+            if not dist or d<dist then best,dist=point,d end
+        end
+    end
+    if not best then return false end
+    A.Add(out,{key='rank:333:225',title=p.name..': '..A.Translate('Train next profession rank'),
+        detail=A.Translate('Annora is inside Uldaman. This pin marks the entrance, not the trainer.')..'\n'..A.Translate('Next skill cap')..': 300'..'\n'..(A.ProfessionRankRequirementText(p) or ''),
+        why=A.Translate('Train Artisan Enchanting during this Uldaman visit.'),
+        map=map,x=best[1],y=best[2],professionID=333,profession=p.name,professionRank=true,capMax=225,priority=12,verify=true})
+    return true
+end
 function A.ProfessionRows(out,map,travel)
-    local api=SkillUpForever and SkillUpForever.API
-    if not (api and api.version==1 and api.Professions) then
+    local list=A.ProfessionPlans()
+    if not list then
         A.status.SkillUp='Public API unavailable; no guessed trainer locations'
+        if A.CheckUnavailable then A.CheckUnavailable('SkillUp profession data unavailable') end
         return
     end
-    local professions,why=A.Safe('SkillUp professions',api.Professions)
-    if not professions and A.CheckUnavailable then A.CheckUnavailable('SkillUp profession data unavailable') end
-    A.status.SkillUp=professions and 'Ranks/books only; dynamic recipe shopping disabled' or ('Not ready: '..tostring(why))
-    for _,p in ipairs(professions or {}) do
+    A.status.SkillUp='Ranks/books only; dynamic recipe shopping disabled'
+    for _,p in ipairs(list) do
+        local cap=availableRank(p)
+        local localRank=cap and A.LocalProfessionTrainer(p,map)
+        local covered=rankQuestRow(out,p,map) or annoraRow(out,p,map)
         local hasBook=A.coveredBooks and A.coveredBooks[p.skillLineID]
         for _,r in ipairs(out) do if r.criticalBook and r.professionID==p.skillLineID then hasBook=true end end
-        if not hasBook and p.rank and p.maxRank and p.maxRank>0 and p.maxRank<300 and p.rank>=p.maxRank-10 then
+        if not hasBook and not localRank and not covered and p.rank and p.maxRank and p.maxRank>0 and p.maxRank<300 and p.rank>=p.maxRank-10 then
             A.Add(out,{key='cap:'..p.skillLineID,capMax=p.maxRank,professionID=p.skillLineID,profession=p.name,title=p.name..': '..p.rank..' / '..p.maxRank,
-                detail='Near the current rank cap. Check the next rank in SkillUp before travelling. This is a general warning, not proof of a local trainer.',priority=30})
+                detail=capWarningDetail(p),requiredSkill=select(1,A.ProfessionRankRequirements(p)),requiredLevel=select(2,A.ProfessionRankRequirements(p)),priority=30})
         end
         for i,step in ipairs(p.steps or {}) do
-            if step.kind=='train' and not step.itemID and not step.spellID then
+            if step.kind=='train' and not step.itemID and not step.spellID
+                and not (rankQuests[p.skillLineID] and p.maxRank==225 and (not step.questID or curatedRankQuestIDs[step.questID]))
+                and not (p.skillLineID==333 and covered)
+                and (step.questID or (p.maxRank and p.maxRank<300 and (not trainerRankRequirements[p.skillLineID] or not trainerRankRequirements[p.skillLineID][p.maxRank/75] or cap))) then
                 local m,x,y,npc
                 local finish=step.questID and A.QuestReady(step.questID)
                 if step.questID then m,x,y,npc=A.QuestLocation(step.questID,finish,map) end
@@ -413,10 +556,17 @@ function A.ProfessionRows(out,map,travel)
                 if questAllowed and (m or textMatch) then
                     A.Add(out,{key='rank:'..p.skillLineID..':'..(step.questID or p.maxRank or i),
                         title=p.name..': '..(finish and A.Translate('Turn in rank quest') or (step.text or 'Train next profession rank')),
-                        detail=detail..'\nProfession rank'..(textMatch and not m and ' (zone matched from route text)' or ''),
+                        detail=detail..'\nProfession rank'..(textMatch and not m and ' (zone matched from route text)' or '')..'\n'..(A.ProfessionRankRequirementText(p) or ''),
                         map=m,x=x,y=y,quest=step.questID,finish=finish,skill=p.skillLineID,professionID=p.skillLineID,profession=p.name,professionRank=true,capMax=p.maxRank,cost=step.cost,stepIndex=i,priority=12,verify=true,why='Profession rank progression: '..p.name})
                 end
             end
+        end
+        if not hasBook and not covered and localRank then
+            A.Add(out,{key='rank:'..p.skillLineID..':'..p.maxRank,
+                title=p.name..': '..A.Translate('Train next profession rank'),
+                detail=localRank.name..' | '..A.Translate('price unknown')..'\n'..A.Translate('Next skill cap')..': '..cap..'\n'..(A.ProfessionRankRequirementText(p) or ''),
+                map=localRank.map,x=localRank.x,y=localRank.y,professionID=p.skillLineID,profession=p.name,
+                professionRank=true,capMax=p.maxRank,priority=12,verify=true,why='Profession rank progression: '..p.name})
         end
     end
 end
@@ -542,6 +692,39 @@ function A.ObserveMerchant()
         end
     end
 end
+local professionTrainingIndex
+local function professionTrainingData()
+    local npcs,builtin,observed=TrainerSpellsProfessionTrainers,TrainerSpellsBuiltin_Profession,TrainerSpells_ProfessionData
+    local index=professionTrainingIndex
+    if index and index.npcs==npcs and index.builtin==builtin and index.observed==observed then return index end
+    index={npcs=npcs,builtin=builtin,observed=observed,ids={},names={},spells={}}
+    for _,trainers in pairs(npcs or {}) do
+        for _,trainer in ipairs(type(trainers)=='table' and trainers or {}) do
+            if trainer.npcID then index.ids[trainer.npcID]=true end
+            for _,name in pairs(trainer.names or {}) do index.names[name]=true end
+        end
+    end
+    local function recipes(data)
+        for _,levels in pairs(data or {}) do
+            for _,spells in pairs(type(levels)=='table' and levels or {}) do
+                for id,row in pairs(type(spells)=='table' and spells or {}) do
+                    local spell=type(row)=='table' and row.spellID or nil
+                    if type(spell or id)=='number' then index.spells[spell or id]=true end
+                end
+            end
+        end
+    end
+    recipes(builtin);recipes(observed)
+    professionTrainingIndex=index
+    return index
+end
+function A.IsProfessionTraining(entry,service)
+    if entry and entry.professionTrainer==true then return true end
+    if service and (service.professionID or A.ProfessionID(service.profession)) then return true end
+    local index=professionTrainingData()
+    return (entry and ((entry.npcID and index.ids[entry.npcID]) or (not entry.npcID and index.names[entry.name])))
+        or (service and service.spell and index.spells[service.spell]) or false
+end
 function A.ObserveTrainer()
     if not (GetNumTrainerServices and GetTrainerServiceInfo) then
         A.status.Trainer='Trainer listing API unavailable';return
@@ -557,6 +740,14 @@ function A.ObserveTrainer()
     entry.seen=time()
     local pos=C_Map.GetPlayerMapPosition and C_Map.GetPlayerMapPosition(map,'player')
     if pos then local x,y=pos:GetXY();entry.x,entry.y=x*100,y*100 end
+    professionTrainingIndex=nil -- TrainerSpells can update captured tables in place.
+    local tradeskill=A.Safe('profession trainer type',IsTradeskillTrainer)
+    if tradeskill~=nil then entry.professionTrainer=tradeskill==true end
+    if A.IsProfessionTraining(entry) then
+        entry.professionTrainer=true;entry.services={}
+        A.status.Trainer=A.Translate('Profession recipes excluded; rank upgrades use profession progression checks')
+        return
+    end
     for i=1,GetNumTrainerServices() do
         local service,second,third=GetTrainerServiceInfo(i)
         -- Forever uses name/category; older Classic builds use name/rank/category.
@@ -571,7 +762,9 @@ function A.ObserveTrainer()
             if category=='available' then
                 local skillName=A.Safe('trainer skill name',GetTrainerServiceSkillReq,i)
                 local professionID=A.ProfessionID(skillName)
-                entry.services[id]={name=service,rank=rank,spell=spell,cost=cost,profession=skillName,professionID=professionID}
+                local offer={name=service,rank=rank,spell=spell,cost=cost,profession=skillName,professionID=professionID}
+                if A.IsProfessionTraining(entry,offer) then entry.services[id]=nil
+                else entry.services[id]=offer end
             elseif category=='used' then entry.services[id]=nil end
         end
     end
@@ -579,13 +772,15 @@ function A.ObserveTrainer()
 end
 function A.TrainerRows(out,map)
     for _,entry in pairs(A.db.trainers) do
-        if entry.map==map then
+        if A.IsProfessionTraining(entry) then entry.services={}
+        elseif entry.map==map then
             for key,service in pairs(entry.services) do
                 local learned=service.spell and A.SpellKnown(service.spell)
                 local spellInfo=service.spell and C_Spell and A.Safe('localized trainer spell',C_Spell.GetSpellInfo,service.spell)
                 local serviceName=(spellInfo and spellInfo.name) or service.name
                 local trainerName=(entry.npcID and read('Npc',entry.npcID,'name')) or entry.name
-                if not learned then
+                if A.IsProfessionTraining(entry,service) then entry.services[key]=nil
+                elseif not learned then
                     local price=A.FormatMoney(service.cost)
                     A.Add(out,{key='train:'..key,spell=service.spell,cost=service.cost,professionID=service.professionID,profession=service.profession,title='Training: '..serviceName..(service.rank~='' and (' '..(service.rank or '')) or ''),
                         detail=trainerName..' | '..price..'\nAvailable at last visit; revisit to verify current status.',map=map,x=entry.x,y=entry.y,priority=25,verify=true})

@@ -1,6 +1,6 @@
 local _,A=...
 A.categories={
-    {id='quests',name='Quests & chains',subs={turnins='Other completed quests'}},
+    {id='quests',name='Quests & chains',subs={turnins='Other completed quests',dungeonjournal='DungeonJournal dungeon quests (optional)'}},
     {id='professions',name='Professions',subs={
         ['129']='First Aid',['185']='Cooking',['356']='Fishing',['171']='Alchemy',
         ['164']='Blacksmithing',['333']='Enchanting',['202']='Engineering',
@@ -17,6 +17,7 @@ function A.Category(row)
         cat='professions';sub=tostring(row.professionID or row.skill);label=row.profession or row.title:match('^([^:]+):') or sub
     elseif row.attuneStep then
         cat='quests';sub='chain:'..row.attuneStep.ID_ATTUNE;label=row.chainName or 'Quest chain'
+    elseif row.dungeonJournal then cat='quests';sub='dungeonjournal';label='DungeonJournal dungeon quests (optional)'
     elseif row.quest then cat='quests';sub='turnins';label='Other completed quests'
     elseif row.ammoItem then cat='supplies';sub='ammo';label='Hunter ammunition'
     elseif key:find('^supply:') then cat='supplies';sub=key:sub(8);label=A.ItemName(tonumber(sub))

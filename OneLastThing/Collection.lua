@@ -1,5 +1,6 @@
 local _,A=...
 local definitions={
+ DungeonJournalRows={category='quests',sub='dungeonjournal',label='DungeonJournal dungeon quests'},
  AttuneRows={category='quests',label='Quest chains'},TurnInRows={category='quests',sub='turnins',label='Quest turn-ins'},
  ImportantVendorRows={category='professions',label='Profession books'},ProfessionRows={category='professions',label='Profession ranks'},
  SupplyRows={category='supplies',label='Supplies'},HunterAmmoRows={category='supplies',sub='ammo',label='Hunter ammunition'},
@@ -7,22 +8,22 @@ local definitions={
  WeaponRows={category='training',sub='weapons',label='Weapon skills'},FlightRows={category='errands',sub='flights',label='Flight paths'},
  TrainerRows={category='training',label='Observed training'},BagRows={category='errands',sub='bags',label='Bag space'},
 }
-local cached={AttuneRows=true,TurnInRows=true,ClassSpellRows=true,WeaponRows=true,FlightRows=true}
+local cached={DungeonJournalRows=true,AttuneRows=true,TurnInRows=true,ClassSpellRows=true,WeaponRows=true,FlightRows=true}
 function A.InvalidateProviders(names)
     if not names then A.providerCache={};return end
     for _,name in ipairs(names) do if A.providerCache then A.providerCache[name]=nil end end
 end
 function A.InvalidateForEvent(event)
     local affected={
-      BAG_UPDATE_DELAYED={'AttuneRows'},PLAYER_MONEY={'ClassSpellRows'},
-      QUEST_LOG_UPDATE={'AttuneRows','TurnInRows'},QUEST_TURNED_IN={'AttuneRows','TurnInRows'},
-      QUEST_DATA_LOAD_RESULT={'AttuneRows','TurnInRows'},
-      SPELLS_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows'},
-      SKILL_LINES_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows'},
+      BAG_UPDATE_DELAYED={'AttuneRows','DungeonJournalRows'},PLAYER_MONEY={'ClassSpellRows'},
+      QUEST_LOG_UPDATE={'AttuneRows','TurnInRows','DungeonJournalRows'},QUEST_TURNED_IN={'AttuneRows','TurnInRows','DungeonJournalRows'},
+      QUEST_DATA_LOAD_RESULT={'AttuneRows','TurnInRows','DungeonJournalRows'},
+      SPELLS_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows','DungeonJournalRows'},
+      SKILL_LINES_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows','DungeonJournalRows'},
       TAXIMAP_OPENED={'FlightRows'},
       UPDATE_INVENTORY_DURABILITY={},MERCHANT_UPDATE={},MERCHANT_SHOW={},MERCHANT_CLOSED={},
       TRAINER_UPDATE={'ClassSpellRows','WeaponRows'},TRAINER_SHOW={'ClassSpellRows','WeaponRows'},
-      GET_ITEM_INFO_RECEIVED={'AttuneRows'},ITEM_DATA_LOAD_RESULT={'AttuneRows'},
+      GET_ITEM_INFO_RECEIVED={'AttuneRows','DungeonJournalRows'},ITEM_DATA_LOAD_RESULT={'AttuneRows','DungeonJournalRows'},
       UNIT_SPELLCAST_SENT={},UNIT_PET={},PET_UI_UPDATE={},PET_BAR_UPDATE={},PLAYER_EQUIPMENT_CHANGED={},
     }
     A.InvalidateProviders(affected[event])
@@ -38,11 +39,14 @@ local function readiness(name)
     if name=='AttuneRows' then
         if not (Attune_Data and Attune_Data.steps and Attune_Data.attunes and A.AttuneToon()) then return 'Attune character data unavailable' end
         if not (LibQuestieDB and LibQuestieDB.Quest) then return 'Quest eligibility/location data incomplete' end
+    elseif name=='DungeonJournalRows' then
+        if not (A.DungeonJournalData and A.DungeonJournalData()) then return 'DungeonJournal data unavailable or unsupported' end
+        if not (LibQuestieDB and LibQuestieDB.Quest) then return 'Quest eligibility/location data incomplete' end
     elseif name=='TurnInRows' then
         if not (C_QuestLog and C_QuestLog.GetNumQuestLogEntries and C_QuestLog.GetInfo and LibQuestieDB and LibQuestieDB.Quest) then return 'Quest turn-in data unavailable' end
     elseif name=='ProfessionRows' or name=='ImportantVendorRows' then
         local api=SkillUpForever and SkillUpForever.API
-        if not (api and api.version==1 and api.Professions) then return 'SkillUp profession data unavailable' end
+        if not (api and api.version==1 and api.Professions) and not (GetProfessions and GetProfessionInfo) then return 'SkillUp profession data unavailable' end
     elseif name=='ClassSpellRows' then
         local _,class=UnitClass('player')
         local data=(TrainerSpells_Data and TrainerSpells_Data[class])
@@ -75,6 +79,9 @@ function A.RunProvider(name,out,map,travel,useCache)
     local classData,classTrainers,classPortals
     if name=='ClassSpellRows' then
         if A.ClassSpellData then classData,classTrainers,classPortals=A.ClassSpellData() end
+    elseif name=='DungeonJournalRows' then
+        local d=A.DungeonJournalData and A.DungeonJournalData()
+        if d then key=key..':'..tostring(d.DB)..':'..tostring(d.QUEST_PREREQ_CHAINS)..':'..tostring(d.QUEST_PREREQ_DETAILS)..':'..tostring(d.QUEST_START_MAPS) end
     elseif name=='AttuneRows' then key=key..':'..tostring(Attune_Data)..':'..tostring(A.db.attuneAllChains) end
     local cache=A.providerCache and A.providerCache[name]
     if useCache and cached[name] and not warning and cache and cache.fn==fn and cache.key==key

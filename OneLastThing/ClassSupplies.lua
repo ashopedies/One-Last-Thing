@@ -61,7 +61,6 @@ function A.SyncClassSupplies()
 end
 function A.SupplyRelevant(id,rule)
  if not rule.classDefault then return true end
- if A.db.reagentEconomy and not rule.classUtility then return false end
  if id==17028 and A.SpellKnown(21564) then return false end
  for _,p in ipairs(A.ClassSupplyList()) do
   if p[1]==id then

@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.10'
+A.version = '0.14.18'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
@@ -44,6 +44,7 @@ function A.Init()
     d.filters = d.filters or {}
     -- Ordinary turn-ins duplicate quest trackers; explicit character choices win.
     if d.filters['quests/turnins']==nil then d.filters['quests/turnins']=false end
+    if d.filters['quests/dungeonjournal']==nil then d.filters['quests/dungeonjournal']=false end
     d.settingsSections=d.settingsSections or {}
     d.filters['errands/notes']=nil
     d.sources.NoteRows=nil
@@ -167,9 +168,9 @@ function A.Collect(map, travel, useCache)
     local out = {}
     if not A.db or not map then return out end
     if not useCache and A.InvalidateProviders then A.InvalidateProviders() end
-    A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.collecting=true
+    A.providerHealth={};A.coveredBooks={};A.collectClassList=nil;A.collecting=true;A.worldCoordCache={}
     if A.SyncClassSupplies then A.SyncClassSupplies() end
-    for _, name in ipairs({'AttuneRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
+    for _, name in ipairs({'AttuneRows','DungeonJournalRows','TurnInRows','ImportantVendorRows','ProfessionRows','SupplyRows','HunterAmmoRows','RepairRows','ClassSpellRows','WeaponRows','FlightRows','TrainerRows','BagRows'}) do
         if A.RunProvider then A.RunProvider(name,out,map,travel,useCache)
         elseif A.db.sources[name]~=false then A.Safe(name, A[name], out, map, travel) end
     end
@@ -180,6 +181,7 @@ function A.Collect(map, travel, useCache)
             return a.priority < b.priority
         end)
     end
+    A.worldCoordCache=nil
     return out
 end
 function A.Refresh(reason, show, manual, forceDraw)
@@ -271,7 +273,6 @@ function A.SupplyStatus(id)
     local r=A.db.supplies[id];local have=A.ItemCount(id)
     local state
     if not r or not A.CategoryEnabled('supplies',tostring(id)) or A.db.sources.SupplyRows==false then state='Disabled'
-    elseif A.db.reagentEconomy and r.classDefault and not r.classUtility then state='Reagent Economy enabled'
     elseif UnitLevel('player')<(r.minLevel or 1) then state='Requires level '..r.minLevel
     elseif A.SupplyRelevant and not A.SupplyRelevant(id,r) then state='Spell not learned / older rank'
     elseif A.db.trash['supply:'..id] then state='Ignored — re-enable to show'

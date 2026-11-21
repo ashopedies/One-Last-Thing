@@ -17,16 +17,39 @@ function A.TrackWaypoint(row,map,x,y)
     if not p then return end
     p.hyperlink=link()
     p.key=row.key
-    for _,key in ipairs({'quest','finish','spell','buyItem','flightID','professionID','criticalBook','capMax','skill','buyTarget','repair','professionRank','ammoItem','ammoKind'}) do p[key]=row[key] end
+    for _,key in ipairs({'quest','finish','spell','buyItem','flightID','professionID','criticalBook','capMax','skill','buyTarget','repair','professionRank','dungeonJournal','firstAidManuals','ammoItem','ammoKind'}) do p[key]=row[key] end
     p.supply=tonumber((row.key or ''):match('^supply:(%d+)'))
     if p.supply and A.db.supplies[p.supply] then p.target=A.db.supplies[p.supply].target end
     A.db.pin=p
+    if A.UpdateRowPinStates then A.UpdateRowPinStates() end
 end
 local function same(a,b)
     return a and b and a.map==b.map and math.abs(a.x-b.x)<.00001 and math.abs(a.y-b.y)<.00001
 end
+function A.IsPinnedRow(row)
+    return row~=nil and A.db~=nil and A.db.pin~=nil and A.db.pin.key==row.key
+end
+function A.ClearOwnedPin(row)
+    if InCombatLockdown() then return false end
+    local p=A.db and A.db.pin
+    if not p or (row and p.key~=row.key) then return false end
+    local live,readable=A.ReadWaypoint();local liveLink=link()
+    local owned=same(p,live) or (p.hyperlink and liveLink==p.hyperlink)
+    if owned then
+        if not (C_Map and C_Map.ClearUserWaypoint) then return false end
+        local ok,err=pcall(C_Map.ClearUserWaypoint)
+        if not ok then A.errors['clear task waypoint']=tostring(err);return false end
+        A.errors['clear task waypoint']=nil
+        if same(p,A.ReadWaypoint()) or (p.hyperlink and link()==p.hyperlink) then return false end
+        if C_SuperTrack and C_SuperTrack.SetSuperTrackedUserWaypoint then A.Safe('untrack task waypoint',C_SuperTrack.SetSuperTrackedUserWaypoint,false) end
+    elseif not (live or liveLink or readable) then return false end
+    A.db.pin=nil
+    if A.UpdateRowPinStates then A.UpdateRowPinStates() end
+    return true
+end
 local function finished(p)
     if A.db.trash[A.TrashKey(p)] or A.db.dismissed[p.key] or (A.db.snoozed[p.key] or 0)>time() then return true end
+    if p.dungeonJournal and not A.CategoryEnabled('quests','dungeonjournal') then return true end
     if p.repair then
         local durability=A.EquipmentDurability()
         if not A.CategoryEnabled('errands','repairs') or (durability and durability*100>=(A.db.repairThreshold or 40)) then return true end
@@ -44,8 +67,11 @@ local function finished(p)
         local info=C_TradeSkillUI and A.Safe('pinned recipe learned',C_TradeSkillUI.GetRecipeInfo,p.spell)
         if info and info.learned then return true end
     end
+    if (p.key or ''):match('^train:') and not p.weapon and A.IsProfessionTraining
+        and A.IsProfessionTraining(nil,p) then return true end
     if (p.key or ''):match('^buyrecipe:') or (p.skill and not p.professionRank) then return true end -- removed route-dependent reminder
     if (p.key or ''):match('^note:') then return true end -- retire an owned pin from the removed feature
+    if p.firstAidManuals and A.FirstAidManualsMissing and #A.FirstAidManualsMissing()==0 then return true end
     if p.criticalBook and p.buyItem and A.CriticalBookOwned and A.CriticalBookOwned(p.buyItem) then return true end
     if p.buyItem and A.ItemCount(p.buyItem)>=(p.buyTarget or 1) then return true end
     if p.flightID and A.db.flightKnown[p.flightID] then return true end
@@ -54,6 +80,15 @@ local function finished(p)
         for _,profession in ipairs((api and A.Safe('pinned profession cap',api.Professions)) or {}) do
             local cap=profession.maxRank or 0
             if profession.skillLineID==p.professionID and ((p.criticalBook and cap>=p.capMax) or (not p.criticalBook and cap>p.capMax)) then return true end
+        end
+        -- Gathering professions can be absent from SkillUp's crafting routes.
+        if GetProfessions and GetProfessionInfo then
+            local ok,a,b,c,d,e,f=pcall(GetProfessions)
+            if ok then for _,index in pairs({a,b,c,d,e,f}) do
+                local good,_,_,_,cap,_,_,id=pcall(GetProfessionInfo,index)
+                if good and id==p.professionID and type(cap)=='number'
+                    and ((p.criticalBook and cap>=p.capMax) or (not p.criticalBook and cap>p.capMax)) then return true end
+            end end
         end
     end
     if p.supply and (not A.db.supplies[p.supply] or A.ItemCount(p.supply)>=A.db.supplies[p.supply].target) then return true end
@@ -69,7 +104,7 @@ function A.CleanupPin()
     local owned=same(p,live) or (p.hyperlink and liveLink==p.hyperlink)
     if not owned then
         -- Drop ownership only when a replacement or removal is observable.
-        if live or liveLink or removed then A.db.pin=nil end
+        if live or liveLink or removed then A.db.pin=nil;if A.UpdateRowPinStates then A.UpdateRowPinStates() end end
         return
     end
     if finished(p) and C_Map.ClearUserWaypoint then
@@ -83,5 +118,6 @@ function A.CleanupPin()
             A.Safe('untrack completed task waypoint',C_SuperTrack.SetSuperTrackedUserWaypoint,false)
         end
         A.db.pin=nil
+        if A.UpdateRowPinStates then A.UpdateRowPinStates() end
     end
 end

@@ -26,7 +26,7 @@ A matching quiver or shot pouch already equipped or carried suppresses the basic
 
 ## Rogues
 
-A previously carried finished poison is remembered per poison family only when a vendor relation is proven. If the chosen item has no known vendor, crafting or Auction House acquisition is not suggested. Thieves' Tools are a utility item, so the manual Reagent Economy toggle does not suppress them.
+A previously carried finished poison is remembered per poison family only when a vendor relation is proven. If the chosen item has no known vendor, crafting or Auction House acquisition is not suggested. Thieves' Tools are a utility item. Use the Supplies parent checkbox or individual item checkboxes to control reminders; item targets stay saved while unchecked.
 
 ## Existing settings
 

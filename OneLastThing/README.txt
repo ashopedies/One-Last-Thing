@@ -1,4 +1,4 @@
-ONE LAST THING — 0.14.10
+ONE LAST THING — 0.14.18
 WoW Forever / interface 16001
 
 INSTALL
@@ -50,14 +50,38 @@ Off by default to avoid duplicate reminders from quest trackers. Opt in under
 Filter > Quests & chains > Other completed quests. Important tracked-chain
 turn-ins remain independent. Explicit choices save per character.
 
+OPTIONAL DUNGEONJOURNAL
+Settings > Quests & chains > DungeonJournal dungeon quests (optional).
+Off by default, saved per character. Supplements Attune with local dungeon
+pickups and required prerequisite steps. Questie verifies availability; IDs
+prevent duplicates. Distance, level, faction, class/profession, completion,
+Skip/Ignore and restore apply. Item-start tasks, repeatables and unfinished
+hub placeholders are excluded. Gray prerequisites need a relevant later quest.
+Requires installed DungeonJournal data; no database/assets are bundled or
+modified. Tested with DungeonJournal 2.1.2. Missing/unsupported data is reported
+only when enabled. Automatic instance suppression is unchanged.
+
 PROFESSION PROGRESSION
+Routine profession recipes are excluded, including remembered trainer offers.
+Rank upgrades, key books and progression quests remain. Two First Aid bandage
+manuals are a curated exception, grouped into one optional vendor stop. Class spells retain
+individual Skip/Ignore controls for gold decisions.
 All twelve professions use the shared rank-reminder path; only professions
-learned by this character are shown. SkillUp supplies rank steps and installed
-TrainerSpells data supplies friendly, rank-capable trainer locations.
+learned by this character are shown. Eligible local trainer ranks are checked
+independently of the next recipe steps. SkillUp supplies profession plans; native
+profession state includes gathering skills omitted by crafting plans. Installed
+TrainerSpells data supplies friendly, rank-capable trainer locations, with small
+fallbacks for missing Rogvar and Drakk Stonehand. Outdoor distance limits apply.
 Important First Aid, Cooking and Fishing rank books can be bought ahead of
 their use requirements. Required/current skill and level are shown, with
 ownership/bank, learned-cap, affordability, stock and category checks retained.
-At most two key rank-book offers are shown.
+At most two book/vendor offers are shown. From First Aid 125, Heavy Silk and
+Mageweave Bandage manuals form one vendor entry; owned/banked and learned
+manuals are excluded. Skip/Ignore applies to the whole entry.
+Triage, Clamlette Surprise and Nat Pagle rank quests have independent checks.
+At Enchanting 200/225 and character level 35+, an Annora reminder can appear
+near either Uldaman approach. Its pin marks the entrance, not the indoor trainer.
+Automatic instance suppression remains enabled.
 Dungeon, class, access and profession reminders include short purpose text;
 hover for full explanations, requirements and destination details.
 
@@ -102,3 +126,11 @@ CHANGELOG.md lists what changed in each version. German wording is listed
 in TRANSLATIONS-deDE.md. Behavior checks use Lua 5.1 API fixtures; live client
 verification is still needed. For errors, include location, language,
 /olt status and the BugSack message.
+
+SUPPLY CONTROLS
+Use the Supplies parent checkbox and individual item checkboxes. Amounts stay
+saved when unchecked. Quest settings use the same parent checkbox followed
+by their child controls.
+
+Map * marks the active task pin. Right-click Map to clear that pin.
+Map * kennzeichnet den aktiven Aufgabenpin. Rechtsklick auf Karte entfernt ihn.

@@ -37,6 +37,7 @@ local function button(parent,title,x,y,w,fn)
 end
 function A.AddonRequirements()
     local definitions={
+        {'ForeverDungeonJournal','DungeonJournal','Optional: extra local dungeon quest pickups; enable under Quests & chains.'},
         {'Attune','Attune','Needed for quest-chain and class-quest reminders.'},
         {'Questie','Questie','Needed for full quest eligibility and zone conversion.'},
         {'QuestieDB','QuestieDB','Needed for full NPC, vendor and quest location data.'},
@@ -83,8 +84,8 @@ function A.ShowSettings()
     f.scroll=acquire('ScrollFrame',nil,f);f.scroll:SetPoint('TOPLEFT',10,-48);f.scroll:SetPoint('BOTTOMRIGHT',-10,18)
     f.content=acquire('Frame',nil,f.scroll);f.content:SetSize(410,1);A.AttachScrolling(f.scroll,f.content)
     local scrollWheel=f.scroll:GetScript('OnMouseWheel')
-    f.scroll:SetScript('OnMouseWheel',function(self,delta) if f.menu then f.menu:Hide() end;scrollWheel(self,delta) end)
-    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) if f.menu then f.menu:Hide() end;f.scroll:GetScript('OnMouseWheel')(f.scroll,delta) end)
+    f.scroll:SetScript('OnMouseWheel',function(self,delta) if f.menu then f.menu:Hide() end;if scrollWheel then scrollWheel(self,delta) end end)
+    f:EnableMouseWheel(true);f:SetScript('OnMouseWheel',function(_,delta) if f.menu then f.menu:Hide() end;local wheel=f.scroll:GetScript('OnMouseWheel');if wheel then wheel(f.scroll,delta) end end)
     f.controls={};f.pool={};f.boxes={}
     table.insert(UISpecialFrames,'OneLastThingSettings');A.BuildSettings();f:Show()
 end
@@ -102,7 +103,6 @@ local function buildSettings()
         local ammo=A.HunterAmmoSelection()
         keys[#keys+1]='ammo:'..tostring(ammo)..':'..A.HunterAmmoTarget()
     end
-    keys[#keys+1]='economy:'..tostring(A.db.reagentEconomy)
     table.sort(keys);local signature=table.concat(keys,'|')
     if f.signature==signature then
         for _,b in ipairs(f.boxes) do b:SetChecked(b.read()) end
@@ -194,7 +194,7 @@ local function buildSettings()
                 table.insert(UISpecialFrames,'OneLastThingSettingsDropdown')
                 menu.scroll=acquire('ScrollFrame',nil,menu);menu.scroll:SetPoint('TOPLEFT',5,-5);menu.scroll:SetPoint('BOTTOMRIGHT',-5,5)
                 menu.content=acquire('Frame',nil,menu.scroll);menu.content:SetSize(202,1);A.AttachScrolling(menu.scroll,menu.content)
-                menu:EnableMouseWheel(true);menu:SetScript('OnMouseWheel',function(_,delta) menu.scroll:GetScript('OnMouseWheel')(menu.scroll,delta) end)
+                menu:EnableMouseWheel(true);menu:SetScript('OnMouseWheel',function(_,delta) local wheel=menu.scroll:GetScript('OnMouseWheel');if wheel then wheel(menu.scroll,delta) end end)
             end
             menu.content:SetHeight(#current*26)
             for _,item in ipairs(menu.items) do item:Hide() end
@@ -209,8 +209,6 @@ local function buildSettings()
     end
     local function supplies()
         f.supplyInputs={};f.supplyChecks={};f.supplyDeletes={};f.supplyStatuses={}
-        control('I have Reagent Economy (hide class reagent checks)',function() return A.db.reagentEconomy==true end,
-            function(v) A.db.reagentEconomy=v;f.signature=nil;A.BuildSettings();A.Refresh('Updated',false) end,true)
         local seen={}
         local function supplyRow(id,default,custom)
             local itemID=id
@@ -329,14 +327,14 @@ local function buildSettings()
     end));y=y+40
     for _,cat in ipairs(A.categories) do
         section('category:'..cat.id,cat.name,false)
-        if cat.id=='quests' then
-            toggle('Scan all unfinished Attune quest chains','attuneAllChains')
-            text('Class, dungeon, raid/access and miscellaneous chains',11)
-        end
         local categoryBox=control(cat.name,function() return A.CategoryEnabled(cat.id) end,function(v) A.SetCategory(cat.id,nil,v) end)
         A.Tint(categoryBox.label,cat.id)
+        if cat.id=='quests' then
+            control('Scan all unfinished Attune quest chains',function() return A.db.attuneAllChains~=false end,
+                function(v) A.db.attuneAllChains=v;A.InvalidateProviders();A.Refresh('Updated',false) end,true)
+        end
         local keys={};for sub in pairs(cat.subs) do keys[#keys+1]=sub end
-        table.sort(keys,function(a,b) return cat.subs[a]<cat.subs[b] end)
+        table.sort(keys,function(a,b) return A.Translate(cat.subs[a])<A.Translate(cat.subs[b]) end)
         for _,sub in ipairs(cat.id~='supplies' and keys or {}) do
             -- Child checkbox stores its own choice, independent of the parent.
             local childBox=control(cat.subs[sub],function() return A.db.filters[cat.id..'/'..sub]~=false end,

@@ -78,21 +78,28 @@ function A.ShowFilters(anchor)
     if not m then
         m=CreateFrame('Frame','OneLastThingFilterMenu',UIParent,'BackdropTemplate');A.filterMenu=m
         m:SetSize(290,240);m:SetFrameStrata('DIALOG');m:SetClampedToScreen(true);m:EnableMouse(true)
-        m.pitSettingsBackground=true;A.Panel(m)
+        m:Hide();m.pitSettingsBackground=true;A.Panel(m)
         m.title=text(m,'Show categories',13);m.title:SetPoint('TOPLEFT',12,-10);A.Tint(m.title,'brand')
         m.close=CreateFrame('Button',nil,m);m.close:SetSize(24,24);m.close:SetPoint('TOPRIGHT',-6,-5)
         local label=text(m.close,'x',12);label:SetPoint('CENTER');m.close:SetFontString(label)
         m.close:SetScript('OnClick',A.CloseFilters)
         m.scroll=CreateFrame('ScrollFrame',nil,m);m.scroll:SetPoint('TOPLEFT',10,-36);m.scroll:SetSize(270,190)
         m.content=CreateFrame('Frame',nil,m.scroll);m.content:SetSize(266,1);A.AttachScrolling(m.scroll,m.content)
-        m:EnableMouseWheel(true);m:SetScript('OnMouseWheel',function(_,delta) m.scroll:GetScript('OnMouseWheel')(m.scroll,delta) end)
+        m:EnableMouseWheel(true);m:SetScript('OnMouseWheel',function(_,delta) local wheel=m.scroll:GetScript('OnMouseWheel');if wheel then wheel(m.scroll,delta) end end)
         m.rows={}
         table.insert(UISpecialFrames,'OneLastThingFilterMenu')
-        m:SetScript('OnHide',function()
+        m:SetScript('OnEvent',function(self,event)
+            if event=='GLOBAL_MOUSE_DOWN' and self:IsShown() and not self:IsMouseOver()
+                and not (self.anchor and self.anchor:IsMouseOver()) then A.CloseFilters() end
+        end)
+        m:SetScript('OnShow',function(self) self:RegisterEvent('GLOBAL_MOUSE_DOWN') end)
+        m:SetScript('OnHide',function(self)
+            self:UnregisterEvent('GLOBAL_MOUSE_DOWN');self.anchor=nil
             local f=A.frame
             if f and f:IsShown() and not A.db.collapsed and (f.rowCount or 0)==0 then A.SetCollapsed(true,'auto') end
         end)
     end
+    m.anchor=anchor
     m:ClearAllPoints()
     if A.db.headerPosition=='bottom' then m:SetPoint('BOTTOMRIGHT',anchor,'TOPRIGHT',0,4)
     else m:SetPoint('TOPRIGHT',anchor,'BOTTOMRIGHT',0,-4) end

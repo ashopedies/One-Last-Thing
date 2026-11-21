@@ -24,7 +24,7 @@ C_QuestLog={IsOnQuest=function(id) return active and active[id] or false end,
  IsQuestFlaggedCompleted=function(id) return turned and turned[id] or false end}
 ns={}; function loadAddon(s) assert(load(s))('OneLastThing',ns) end
 ''')
-for file in ['Locale.lua','Migration.lua','SavedData.lua','Core.lua','Collection.lua','Money.lua','ClassSupplies.lua','HunterAmmo.lua','VendorClassItems.lua','Scope.lua','Order.lua','Categories.lua','Providers.lua','ClassTraining.lua','ImportantBuys.lua','TravelTraining.lua','Repairs.lua']:
+for file in ['Locale.lua','Migration.lua','SavedData.lua','Core.lua','Collection.lua','Money.lua','ClassSupplies.lua','HunterAmmo.lua','VendorClassItems.lua','Scope.lua','Order.lua','Categories.lua','Providers.lua','DungeonJournal.lua','ClassTraining.lua','ImportantBuys.lua','TravelTraining.lua','Repairs.lua']:
     lua.globals().loadAddon((root/'OneLastThing'/file).read_text())
 lua.execute('OneLastThing.Init()')
 def check(code): lua.execute(code)
@@ -622,8 +622,8 @@ assert(not OneLastThing.SupplyRelevant(17035,OneLastThing.db.supplies[17035]))
 known[20739]=true
 assert(not OneLastThing.SupplyRelevant(17034,OneLastThing.db.supplies[17034]))
 assert(OneLastThing.SupplyRelevant(17035,OneLastThing.db.supplies[17035]))
-OneLastThing.db.reagentEconomy=true
-assert(not OneLastThing.SupplyRelevant(17035,OneLastThing.db.supplies[17035]))
+OneLastThing.db.filters['supplies/17035']=false
+assert(not OneLastThing.CategoryEnabled('supplies','17035'))
 UnitClass=originalClass;known={};OneLastThingDB={};OneLastThing.Init()
 local originalDraw,originalRefresh=OneLastThing.Draw,OneLastThing.Refresh
 OneLastThing.Draw=function() end;OneLastThing.Refresh=function() end
@@ -674,7 +674,7 @@ assert(OneLastThing.frame.header.scripts.OnUpdate==nil)
 assert(OneLastThing.frame.title.text=='One Last Thing (1)')
 OneLastThing.db.headerPosition='top';OneLastThing.SetCollapsed(false,'manual')
 """)
-print('PASS: all nine class preset lists, learned spell/rank relevance, Reagent Economy, saved editable targets, custom items, removal persistence, partial restock, g/s/c costs, completed-pin cleanup and player-pin safety, bottom/top header, completion fade and hover')
+print('PASS: all nine class preset lists, learned spell/rank relevance, individual supply filters, saved editable targets, custom items, removal persistence, partial restock, g/s/c costs, completed-pin cleanup and player-pin safety, bottom/top header, completion fade and hover')
 
 lua.execute("""
 -- Essential vendor purchases: no learned/owned/irrelevant recipe shopping list.
@@ -730,7 +730,7 @@ print('PASS: stale Ankh state repaired once, 1/3 reminder, enable clears hide/fi
 lua.execute("""
 C_Item.GetItemInfo=function() return 'Ankh',nil,0 end
 OneLastThing.scope={map=1454,name='Orgrimmar',x=.95,y=.95}
-OneLastThing.db.nearbyOnly=true;OneLastThing.db.reagentEconomy=false
+OneLastThing.db.nearbyOnly=true
 OneLastThing.db.supplies[17030].target=3;OneLastThing.BeginVisit()
 local rows={};OneLastThing.SupplyRows(rows,1454,false)
 assert(#rows==1 and rows[1].key=='supply:17030')
@@ -1140,7 +1140,7 @@ OneLastThing.settings.signature=nil;OneLastThing.BuildSettings()
 assert(OneLastThing.settings.sectionButtons.appearance.text=='+ Darstellung')
 assert(OneLastThing.settings.dependencyRows.SkillUpForever.detail.text=='Für Berufsstufen und Bücher; für One Last Thing optional.')
 assert(OneLastThing.db.filters['professions/171']==nil and OneLastThing.db.fontFace=='arial')
--- A German trainer's profession requirement resolves by ID, including service metadata.
+-- German profession metadata must not reintroduce recipe shopping tasks.
 GetNumTrainerServices=function() return 1 end
 GetTrainerServiceInfo=function() return 'Alchemie','available' end
 GetTrainerServiceSkillReq=function() return 'Alchemie' end
@@ -1151,7 +1151,7 @@ local found=false
 for _,trainer in pairs(OneLastThing.db.trainers) do
  for _,service in pairs(trainer.services) do if service.professionID==171 then found=true end end
 end
-assert(found)
+assert(not found)
 GetLocale=function() return 'enUS' end
 assert(OneLastThing.Translate('Target')=='Target')
 GetProfessions=nil;GetProfessionInfo=nil
@@ -1268,12 +1268,14 @@ GetMerchantItemLink=function() return 'item:17058' end
 GetMerchantItemInfo=function() return 'Fish Oil',nil,100,1,-1,true,false end
 OneLastThing.ObserveMerchant();assert(OneLastThing.HasVendorSource(17058))
 OneLastThing.SyncClassSupplies();assert(OneLastThing.db.supplies[17058].target==4)
--- Tools are a non-consumed utility purchase and are not hidden by Reagent Economy.
+-- Tools are a non-consumed utility purchase with their own item control.
 UnitClass=function() return 'Rogue','ROGUE' end
-OneLastThingDB={};OneLastThing.Init();OneLastThing.db.reagentEconomy=true
+OneLastThingDB={};OneLastThing.Init()
 assert(OneLastThing.db.supplies[5060].target==1 and OneLastThing.db.supplies[5060].classUtility)
 assert(OneLastThing.SupplyRelevant(5060,OneLastThing.db.supplies[5060]))
-assert(not OneLastThing.SupplyRelevant(5140,OneLastThing.db.supplies[5140]))
+assert(OneLastThing.SupplyRelevant(5140,OneLastThing.db.supplies[5140]))
+OneLastThing.db.filters['supplies/5140']=false
+assert(not OneLastThing.CategoryEnabled('supplies','5140'))
 -- Finished poisons only enter the list when actually carried and vendor-sourced.
 C_Container={GetContainerNumSlots=function(b) return b==0 and 1 or 0 end,GetContainerItemID=function() return 6947 end}
 OneLastThing.SyncClassSupplies();assert(not OneLastThing.db.supplies[6947])
@@ -2059,3 +2061,23 @@ from test_mage_portals import run as run_mage_portal_tests
 run_mage_portal_tests()
 from test_row_actions import run as run_row_action_tests
 run_row_action_tests()
+from test_profession_recipes import run as run_profession_recipe_tests
+run_profession_recipe_tests()
+
+from test_profession_ranks import run as run_profession_ranks
+run_profession_ranks()
+
+from test_profession_progression import run as run_profession_progression
+run_profession_progression()
+
+from test_dungeonjournal import run as run_dungeonjournal
+run_dungeonjournal()
+
+from test_supply_controls import run as run_supply_controls
+run_supply_controls()
+
+from test_ui_polish import run as run_ui_polish
+run_ui_polish()
+
+from test_rank_requirements import run as run_rank_requirements
+run_rank_requirements()

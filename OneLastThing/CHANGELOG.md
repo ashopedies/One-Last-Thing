@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.14.18 — 2026-11-21
+
+- Show known character-level and profession-skill requirements in near-cap warnings across all twelve professions, including trainer ranks, Expert books and Artisan progression quests. Explain the current skill cap without claiming a local trainer exists.
+- Keep character-level gates first so narrow rows expose the reason an upgrade is not yet available. Add matching requirement text to local rank reminder details/tooltips in English and German.
+- Share Expert book requirement facts with the cap warning instead of guessing a universal level gate. Buy-ahead books remain purchasable reminders before their use requirements; actual training and quest pickup eligibility are unchanged.
+- Add 72 bilingual profession-gate cases, level-up transitions, no-level/unknown-gate handling, skip behavior and learned-cap checks.
+
+## 0.14.17 — 2026-11-21
+
+- Make the popup Settings button stand out using an existing palette accent: Blizzard gold, the player's class color, Pop coral, or Original lavender.
+- Keep the accent through live theme switches, font-size changes and responsive footer labels, without adding a fourth foreground color to the three-color themes.
+- Add regression coverage for all four themes and live font/layout changes.
+
+## 0.14.16 — 2026-11-21
+
+- Measure footer controls using the selected font, shorten labels when needed and wrap them without clipping; keep font controls together and reserve checklist space.
+- Increase Default and Compact row heights with larger fonts. Minimal remains dense.
+- Close category filters on outside clicks and dragging. Add a collapsed-header tooltip with location, remaining count and unavailable checks.
+- Mark the active task's Map button with an ASCII asterisk. Right-click Map to clear its owned pin; manual replacement pins are preserved.
+- Coalesce item-data settings refreshes, reuse world coordinate conversions within one collection, defer ignored-spell rank scans until needed, and guard scroll forwarding.
+- Complete English/German labels and localized settings sorting. Existing reminder sources, profession progression and character settings are preserved.
+
+## 0.14.15 — 2026-11-21
+
+- Label Attune chain hand-ins as "Chain turn-in:" (German: "Kettenquest abgeben:") so they are distinguishable from ordinary completed quests. Recommended levels, chain filters, completion checks and map destinations are unchanged.
+- Ordinary hand-ins retain "Turn in:" / "Abgeben:" and remain controlled by Other completed quests. Profession rank quest wording is unchanged.
+
+## 0.14.14 — 2026-11-21
+
+- Removed the Reagent Economy checkbox and global reagent suppression. Reagents are controlled by the Supplies parent checkbox and individual item checkboxes beside their saved targets.
+- Clear the retired override when saved data loads while preserving explicit item/category choices, targets, custom supplies and ignored reminders. A removed option can no longer silently suppress restock reminders.
+- Made quest settings consistent with the supply hierarchy: the Quests & chains parent checkbox appears first, with the Attune and optional DungeonJournal controls underneath. Child choices remain saved when a parent is toggled.
+- Removed obsolete EN/DE wording and updated regression tests for character-specific controls, existing settings, parent/child ordering and independent alt defaults.
+
+## 0.14.13 — 2026-11-21
+
+- Added optional DungeonJournal dungeon quest pickups under Settings > Quests & chains. The per-character checkbox defaults off and supplements Attune. The adapter reads installed DungeonJournal data without bundling or modifying it; Questie verifies availability and takes precedence for destinations.
+- DungeonJournal pickups use level/faction/class/profession/completion/prerequisite checks, the current location/radius, and canonical quest IDs for deduplication with Attune. Important gray prerequisite steps are explained; ordinary gray quests, repeatables, item-start tasks and unfinished hub placeholders stay excluded. Unsupported/missing sources report health only when enabled.
+- Cached DungeonJournal scans are invalidated by quest/skill/data changes. Movement reuses raw destinations for local distance checks; disabling the source clears an owned DungeonJournal pin. Added EN/DE controls and load status in addon requirements.
+- Share profession state between rank and book checks, filling skills omitted by SkillUp's crafting plans from native character data. Expert Fishing books now work even when Fishing has no crafting route. Existing API results are copied rather than modified.
+- Added independent, level/skill/faction-aware rank quest reminders for Triage, Clamlette Surprise and Nat Pagle, Angler Extreme. They respect accepted/completed quests, actual turn-in locations, distance, filters and hidden reminders. Canonical quest keys avoid duplicates with Attune; previous rank reminder hide states are still respected.
+- Added one Annora rank reminder near either Uldaman approach for Enchanting 200/225 at character level 35+. The waypoint explicitly marks the entrance, not Annora's indoor position. Automatic instance suppression stays in place; learning the rank completes the reminder.
+- Added the two curated First Aid bandage manuals as one vendor-stop entry from skill 125. Learned or owned/banked manuals are excluded; the group shrinks after a purchase and its owned pin clears once all manuals are owned/learned. Stock, price, budget, filters, Skip/Ignore and restore remain supported. Routine profession recipes stay excluded.
+- Added small fallback locations for the three Expert rank books and manual vendors; live merchant prices take precedence over marked estimates. The shortlist remains at most two book/vendor reminders.
+- Corrected Artisan Tailoring's character-level requirement to 35 and Journeyman Fishing's to 10. Artisan Enchanting uses the user's tested skill requirement of 200 at level 35. The disputed Skinning gate is unchanged pending verification; no speculative trainers were added.
+- Added EN/DE regression coverage and a factual trainer snapshot across nine professions, plus native-only progression, rank quests, Annora entrances, grouped manuals, ownership, waypoint completion and requirement checks.
+
+## 0.14.12 — 2026-11-21
+
+- Check eligible local profession rank upgrades independently of SkillUp's next route steps. Alchemy at 219/225 now finds Rogvar near Stonard when the character meets the rank requirements, even with a recipe-only or empty plan.
+- Added small location fallbacks for missing Rogvar (Alchemy, Swamp of Sorrows) and Drakk Stonehand (Leatherworking, The Hinterlands). Installed entries for these NPC IDs take precedence; no upstream addon data is modified. Meilosh's role remains unconfirmed and was not added.
+- Request more rank-route steps and include learned native professions omitted by crafting plans. Preserve rank books/quests, faction/radius filters, Skip/Ignore, per-character settings and the exclusion of routine recipes.
+- Avoid a duplicate cap warning when a specific local rank reminder covers it. Native profession rank completion also clears an owned pin when SkillUp omits that profession.
+- Added English/German regression coverage for the reported case, 60 rank cases across twelve professions, eligibility boundaries, missing trainers, native gathering state, upstream precedence, hidden reminders and completion-only waypoint cleanup.
+
+## 0.14.11 — 2026-11-20
+
+- Removed routine profession recipe errands from observed trainer offers. Profession trainers are recognized natively and through installed trainer data; individual recipes are also filtered by profession metadata and installed recipe spell IDs.
+- Retired recognized recipe offers already stored in the trainer cache, so old lists do not need to be skipped or ignored one by one. Obsolete owned recipe waypoints clear without affecting later player waypoints or saved preferences.
+- Kept profession rank/cap progression, essential rank books and progression quests. Class and weapon spell training retains individual reminders for gold-based choices; no generic recipe-completion task replaces the removed recipe list.
+- Added English/German regression coverage for 1,000-service trainers, legacy cache cleanup, localized trainer names, recipe IDs, pin cleanup and retained progression/class training.
+
 ## 0.14.10 — 2026-11-19
 
 - Removed capital-district flicker: keep a visible checklist in place during same-city zone/indoor events and temporary coordinate gaps. Existing city-wide tasks remain visible while fresh scope data is pending; no collection runs with stale coordinates.
