@@ -1,0 +1,53 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag, e.g. v0.14.15'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - name: Validate tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          tag = os.environ['RELEASE_TAG']
+          if not re.fullmatch(r'v\d+\.\d+\.\d+', tag):
+              raise SystemExit('Expected tag vMAJOR.MINOR.PATCH')
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              out.write('RELEASE_VERSION='+tag[1:]+'\n')
+          PY
+      - name: Install test runtime
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r requirements-dev.txt
+      - name: Lua 5.1 behavior checks
+        run: .venv/bin/python tests/test_addon.py
+      - name: Package install ZIP
+        run: python3 tools/package.py --version "$RELEASE_VERSION"
+      - name: Publish install asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" "dist/OneLastThing-$RELEASE_VERSION-forever.zip" "dist/OneLastThing-$RELEASE_VERSION-forever.zip.sha256" --clobber
+          else
+            gh release create "$RELEASE_TAG" "dist/OneLastThing-$RELEASE_VERSION-forever.zip" "dist/OneLastThing-$RELEASE_VERSION-forever.zip.sha256" --verify-tag --title "One Last Thing $RELEASE_VERSION" --notes-file dist/release-notes.md
+          fi
