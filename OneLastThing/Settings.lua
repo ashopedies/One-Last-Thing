@@ -112,6 +112,7 @@ local function buildSettings()
         if f.range then f.range:SetValue(A.db.nearbyRadius) end
         if f.fadeDelay then f.fadeDelay:SetValue(A.db.completionDelay) end
         if f.repairs then f.repairs:SetValue(A.db.repairThreshold) end
+        if f.skippedStatus then A.SetText(f.skippedStatus,A.SkippedSummary()) end
         A.LayoutSettingsSections();return
     end
     f.signature=signature;f.rebuilding=true
@@ -221,9 +222,9 @@ local function buildSettings()
             c.label:SetWidth(160);c.label:SetHeight(16)
             if c.label.SetMaxLines then c.label:SetMaxLines(1) end
             local target=own(acquire('EditBox',nil,parent,'InputBoxTemplate'))
-            target:SetSize(48,24);target:SetPoint('TOPLEFT',258,-rowY);target:SetAutoFocus(false);target:SetNumeric(true)
+            target:SetSize(48,24);target:SetPoint('TOPLEFT',282,-rowY);target:SetAutoFocus(false);target:SetNumeric(true)
             A.SetText(target,tostring(A.db.supplies[id] and A.db.supplies[id].target or default))
-            own(label(parent,'Target',215,-rowY-6,10))
+            own(label(parent,'Target',215,-rowY-6,10)):SetWidth(62)
             local function save()
                 if f.rebuilding then return end
                 local n=tonumber(target:GetText())
@@ -243,7 +244,7 @@ local function buildSettings()
             end)
             target:SetScript('OnEscapePressed',function() A.SetText(target,tostring(A.db.supplies[id] and A.db.supplies[id].target or default));target:ClearFocus() end)
             if custom then
-                f.supplyDeletes[id]=own(button(parent,'Delete',318,-rowY,65,function()
+                f.supplyDeletes[id]=own(button(parent,'Delete',338,-rowY,65,function()
                     A.DeleteSupply(itemID);f.signature=nil;A.BuildSettings()
                 end))
             end
@@ -291,7 +292,7 @@ local function buildSettings()
         table.sort(ids,function(a,b) return A.SupplyName(a)<A.SupplyName(b) end)
         for _,id in ipairs(ids) do supplyRow(id,A.db.supplies[id].target,true) end
         text('Targets save on Enter or when leaving the field.',10)
-        text('Add item ID                           Target',11)
+        own(label(parent,'Add item ID',24,-y,11));own(label(parent,'Target',220,-y,11));y=y+24
         local item=own(acquire('EditBox',nil,parent,'InputBoxTemplate'));item:SetSize(170,24);item:SetPoint('TOPLEFT',24,-y);item:SetAutoFocus(false);item:SetNumeric(true)
         local count=own(acquire('EditBox',nil,parent,'InputBoxTemplate'));count:SetSize(70,24);count:SetPoint('TOPLEFT',220,-y);count:SetAutoFocus(false);count:SetNumeric(true);A.SetText(count,'3')
         own(button(parent,'Add',310,-y,73,function()
@@ -310,21 +311,24 @@ local function buildSettings()
     text('The six capital cities use city-wide reminders.',11)
     f.range=slider('Outside-city range (yards)',250,2000,50,A.db.nearbyRadius,function(v) A.db.nearbyRadius=v;A.Refresh('Updated',false) end,function(v) return tostring(math.floor(v+.5)) end)
     section('appearance','Appearance',false)
+    text('Window & layout',13)
     f.layoutPicker=dropdown('Reminder layout','rowMode',{{'default','Default'},{'compact','Compact'},{'minimal','Minimal'}})
     dropdown('Header position','headerPosition',{{'top','Top'},{'bottom','Bottom'}})
     f.fadeDelay=slider('Completion fade delay',5,60,1,A.db.completionDelay,function(v) A.db.completionDelay=math.floor(v+.5) end,function(v) return math.floor(v+.5)..'s' end)
-    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'},{'neavCurrent','Neav: Current'},{'neavMoss','Neav: Muted Moss'}})
-    f.opacity=slider('Background opacity',0,100,1,A.db.opacity*100,function(v) A.db.opacity=v/100;A.ApplyOpacity() end,function(v) return math.floor(v+.5)..'%' end)
-    f.fontPicker=dropdown('Font','fontFace',A.FontChoices)
-    f.fontSize=slider('Font size',80,130,5,A.db.fontScale*100,function(v) A.db.fontScale=v/100;A.ApplyFonts() end,function(v) return math.floor(v+.5)..'%' end)
-    dropdown('Text shadow','fontShadow',{{'none','None'},{'soft','Soft'},{'strong','Strong'}})
-    dropdown('Text outline','fontOutline',{{'none','None'},{'thin','Thin'},{'thick','Thick'}})
     f.scale=slider('Popup scale',65,150,5,A.db.scale*100,function(v) A.db.scale=v/100;if A.frame then A.frame:SetScale(A.db.scale) end end,function(v) return math.floor(v+.5)..'%' end)
     own(button(parent,'Reset popup size & position',8,-y,365,function()
         A.db.position=nil;A.db.size={width=440,height=320};A.db.scale=1;A.db.collapsed=false;A.db.collapseMode='manual'
         if A.frame then A.frame:ClearAllPoints();A.frame:SetPoint('CENTER');A.frame:SetScale(1);A.frame:SetSize(440,320);A.ApplyCollapsed() end
         A.BuildSettings()
     end));y=y+40
+    text('Theme & style',13)
+    dropdown('Color theme','theme',{{'blizzard','Blizzard'},{'class','Class Colors'},{'pop','Pop'},{'original','Original'},{'neavCurrent','Neav: Current'},{'neavMoss','Neav: Muted Moss'}})
+    f.opacity=slider('Background opacity',0,100,1,A.db.opacity*100,function(v) A.db.opacity=v/100;A.ApplyOpacity() end,function(v) return math.floor(v+.5)..'%' end)
+    text('Text',13)
+    f.fontPicker=dropdown('Font','fontFace',A.FontChoices)
+    f.fontSize=slider('Font size',80,130,5,A.db.fontScale*100,function(v) A.db.fontScale=v/100;A.ApplyFonts() end,function(v) return math.floor(v+.5)..'%' end)
+    dropdown('Text shadow','fontShadow',{{'none','None'},{'soft','Soft'},{'strong','Strong'}})
+    dropdown('Text outline','fontOutline',{{'none','None'},{'thin','Thin'},{'thick','Thick'}})
     for _,cat in ipairs(A.categories) do
         section('category:'..cat.id,cat.name,false)
         local categoryBox=control(cat.name,function() return A.CategoryEnabled(cat.id) end,function(v) A.SetCategory(cat.id,nil,v) end)
@@ -362,10 +366,11 @@ local function buildSettings()
         y=y+8
     end
     section('recovery','Hidden reminders & help',false)
+    f.skippedStatus=own(label(parent,A.SkippedSummary(),8,-y,11));f.skippedStatus:SetWidth(390);y=y+30
     text('Show hidden: reminders skipped this visit.',11)
     text('Ignored reminders are managed separately below.',11)
     own(button(parent,'Show hidden reminders',8,-y,365,function()
-        A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',false);A.Print('Skipped reminders are visible again. Ignored reminders and category choices stay unchanged.')
+        A.db.dismissed={};A.db.snoozed={};A.Refresh('Restored',false);A.Print('Skipped reminders are visible again. Ignored reminders and category choices stay unchanged.');A.BuildSettings()
     end));y=y+34
     own(button(parent,'Ignored reminders',8,-y,365,function() A.ShowTrashBin() end));y=y+38
     text('/olt status — connection diagnostics',11)

@@ -13,8 +13,6 @@ end
 function A.CloseFilters()
     local m=A.filterMenu;if not m or not m:IsShown() then return end
     m:Hide()
-    local f=A.frame
-    if f and f:IsShown() and not A.db.collapsed and (f.rowCount or 0)==0 then A.SetCollapsed(true,'auto') end
 end
 function A.UpdateFilters()
     local m=A.filterMenu;if not m or not m:IsShown() then return end
@@ -96,10 +94,12 @@ function A.ShowFilters(anchor)
         m:SetScript('OnHide',function(self)
             self:UnregisterEvent('GLOBAL_MOUSE_DOWN');self.anchor=nil
             local f=A.frame
-            if f and f:IsShown() and not A.db.collapsed and (f.rowCount or 0)==0 then A.SetCollapsed(true,'auto') end
+            local collapse=f and f.collapseAfterFilters
+            if f then f.collapseAfterFilters=nil end
+            if collapse and f:IsShown() and not A.db.collapsed and (f.rowCount or 0)==0 then A.SetCollapsed(true,'auto') end
         end)
     end
-    m.anchor=anchor
+    m.anchor=anchor;m.filtersChanged=nil
     m:ClearAllPoints()
     if A.db.headerPosition=='bottom' then m:SetPoint('BOTTOMRIGHT',anchor,'TOPRIGHT',0,4)
     else m:SetPoint('TOPRIGHT',anchor,'BOTTOMRIGHT',0,-4) end

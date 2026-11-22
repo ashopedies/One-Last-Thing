@@ -72,16 +72,28 @@ local function projector(map,source)
         end
     end
 end
+-- The client can expose retired development records alongside real routes.
+-- Match the explicit technical prefix, never ordinary names such as Old Town.
+function A.FlightNodeRelevant(node)
+    if type(node)~='table' or not node.nodeID then return false end
+    A.obsoleteFlightNodes=A.obsoleteFlightNodes or {}
+    if type(node.name)=='string' and node.name:lower():match('^%s*zzold') then
+        A.obsoleteFlightNodes[node.nodeID]=true
+        return false
+    end
+    if type(node.name)=='string' and node.name~='' then A.obsoleteFlightNodes[node.nodeID]=nil end
+    return not A.obsoleteFlightNodes[node.nodeID]
+end
 function A.ObserveFlights()
     if not (C_TaxiMap and C_TaxiMap.GetAllTaxiNodes) then return end
     local map=A.Safe('open flight map ID',GetTaxiMapID)
-    if not map then map=flightMapNodes(A.Map()) end
+    if type(map)~='number' or map<=0 then map=flightMapNodes(A.Map()) end
     local nodes=map and A.Safe('open flight map nodes',C_TaxiMap.GetAllTaxiNodes,map) or {}
     local enum=Enum and Enum.FlightPathState
     local current=enum and enum.Current or 0
     local reachable=enum and enum.Reachable or 1
     for _,node in ipairs(nodes or {}) do
-        if node.nodeID and (node.state==current or node.state==reachable) then A.db.flightKnown[node.nodeID]=true end
+        if A.FlightNodeRelevant(node) and (node.state==current or node.state==reachable) then A.db.flightKnown[node.nodeID]=true end
     end
 end
 function A.FlightRows(out,map)
@@ -98,7 +110,7 @@ function A.FlightRows(out,map)
     local factions=Enum and Enum.FlightPathFaction
     local side=UnitFactionGroup('player')=='Horde' and (factions and factions.Horde or 1) or (factions and factions.Alliance or 2)
     for _,node in ipairs(nodes) do
-        if node.nodeID and node.position and (node.faction==nil or node.faction==0 or node.faction==side) then
+        if A.FlightNodeRelevant(node) and node.position and (node.faction==nil or node.faction==0 or node.faction==side) then
             local undiscovered=node.isUndiscovered
             -- Forever's map flag can claim unvisited routes are learned. Only
             -- Current/Reachable observations at a flight master prove knowledge.

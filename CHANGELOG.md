@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.14.24 — 2026-11-22 — Less squinting, fewer ghost flights
+
+- Retired flight paths with the technical zzOLD prefix can stay retired. Real places such as Powderfuse Port and Old Town remain eligible.
+- Flight maps get one brief follow-up check for late-arriving learned-route data, including a quick-close check. No endless polling, no guessing that every route is learned.
+- Retired OLT flight pins clear without touching a replacement pin you placed yourself. Ignore remains the existing, recoverable way to hide a route you already know; it does not teach OLT that route.
+- Supply item-ID and quantity captions now line up with their fields. German Sollbestand gets breathing room beside existing supply targets too.
+- Appearance settings have three little signposts: Window & layout, Theme & style, and Text. Same controls, easier treasure hunt.
+- Show hidden reminders displays how many temporary hides it can restore, counting duplicate skip/legacy-pause entries once and excluding expired pauses and ignored entries. Recovery settings and the button tooltip show the count too.
+- German polish covers the new captions, skipped counts, map/spell fallbacks, diagnostics and translated chain details. English stays supported alongside it.
+- Eric is unchanged and stays out of the public package. He has other calls to take.
+
+## 0.14.23 — 2026-11-22 — Filter found its manners
+
+- Clicking Filter again closes its menu and keeps a manually opened checklist in view, even when the list is empty. The menu has stopped taking the whole window with it.
+- Hide every category? OLT stays open so you can find your way back to the switches.
+- When the last reminder clears while the menu is open, normal auto-collapse still waits until you close it. New work cancels that pending collapse.
+- Checked English/German, all three layouts, both header positions, outside clicks and Escape. Eric did not attend this meeting.
+
 ## 0.14.22 — 2026-11-21
 
 - Give Neav: Muted Moss clearer gold, moss-green and ivory separation instead of similarly pale gold/green shades.

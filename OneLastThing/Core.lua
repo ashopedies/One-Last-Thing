@@ -1,6 +1,6 @@
 local _, A = ...
 OneLastThing = A
-A.version = '0.14.22'
+A.version = '0.14.24'
 A.name = 'One Last Thing'
 A.status = {}
 A.errors = {}
@@ -284,6 +284,22 @@ function A.SupplyStatus(id)
     elseif have>=r.target then state='Stocked'
     else state='Need '..(r.target-have)..' more' end
     return have..' in bags · '..state
+end
+-- Count temporary hides restored by Show hidden, once per reminder.
+function A.SkippedCount()
+    if not A.db then return 0 end
+    local keys={};local count=0
+    for key,value in pairs(A.db.dismissed or {}) do if value then keys[key]=true end end
+    for key,untilTime in pairs(A.db.snoozed or {}) do
+        if type(untilTime)=='number' and untilTime>time() then keys[key]=true end
+    end
+    for key in pairs(keys) do if not A.db.trash[key] then count=count+1 end end
+    return count
+end
+function A.SkippedSummary()
+    local n=A.SkippedCount()
+    if n==0 then return 'No reminders skipped this visit.' end
+    return n==1 and '1 reminder skipped this visit.' or (n..' reminders skipped this visit.')
 end
 function A.BeginVisit()
     A.db.dismissed={}

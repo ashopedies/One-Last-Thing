@@ -116,3 +116,9 @@ Explanations and cap advice (0.14.21):
 - Move between alternative quest destinations. The hover location source should follow the selected coordinates.
 - Under Professions, turn Show informational profession-cap warnings off. General near-cap advice should disappear; a valid local rank trainer, Artisan rank quest and buy-ahead book must remain eligible.
 - Reload to verify the per-character choice survives; another character defaults to showing cap advice.
+
+Filter toggle (0.14.23):
+- Open an empty checklist manually, then click Filter twice. The menu should close and OLT should stay expanded.
+- Hide all visible categories via Filter. Closing the menu must keep the empty window available for restoring choices.
+- Complete the last real reminder while Filter is open. Auto-collapse should happen when the menu closes; new work before closure should cancel it.
+- Check the same behavior with top/bottom headers, all densities, Escape and outside clicks.

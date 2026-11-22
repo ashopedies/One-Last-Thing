@@ -40,6 +40,10 @@ function A.CategoryEnabled(cat,sub)
     return filters[cat]~=false and (not sub or filters[cat..'/'..sub]~=false)
 end
 function A.SetCategory(cat,sub,enabled)
+    if A.filterMenu and A.filterMenu:IsShown() then
+        A.filterMenu.filtersChanged=true
+        if A.frame then A.frame.collapseAfterFilters=nil end
+    end
     A.db.filters=A.db.filters or {}
     A.db.filters[cat..(sub and '/'..sub or '')]=enabled
     if A.InvalidateProviders then A.InvalidateProviders() end

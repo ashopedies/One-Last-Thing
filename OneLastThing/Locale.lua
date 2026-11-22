@@ -210,6 +210,13 @@ local de={
  ["No ammo upgrade suggestions; you choose the tier."]="Keine automatischen Munitions-Upgrades; du bestimmst die Sorte.",
  ["Managed in Custom supplies"]="Unter „Zusätzliche Gegenstände“ verwaltet",
  ["Arrow"]="Pfeile",["Bullet"]="Kugeln",
+ ["Observed training"]="Erfasste Ausbildung",["Add item ID"]="Gegenstands-ID",
+ ["Window & layout"]="Fenster & Ansicht",["Theme & style"]="Farbschema & Stil",["Text"]="Text",
+ ["No reminders skipped this visit."]="Bei diesem Besuch wurden keine Hinweise übersprungen.",
+ ["1 reminder skipped this visit."]="1 Hinweis bei diesem Besuch übersprungen.",
+ ["Close the checklist after combat."]="Liste nach dem Kampf schließen.",
+ ["Click to expand"]="Klicken zum Ausklappen",
+ ["/olt - check | /olt settings | /olt supply ITEM_ID TARGET | /olt restore | /olt auto | /olt status"]="/olt - prüfen | /olt settings | /olt supply GEGENSTANDS_ID SOLLBESTAND | /olt restore | /olt auto | /olt status",
 }
 A.deDE=de
 function A.IsGerman() return GetLocale and GetLocale()=="deDE" end
@@ -261,6 +268,9 @@ local patterns={
  {"^(.-): Target (%d+) · Have (%d+) · Need (%d+)$",function(t,n,h,m) return t..": Sollbestand "..n.." · Vorhanden "..h.." · Fehlen "..m end},
  {"^(.-): target removed$",function(t) return t..": Sollbestand entfernt" end},
  {"^Item (%d+)$",function(n) return "Gegenstand "..n end},
+ {"^Map (%d+)$",function(n) return "Karte "..n end},
+ {"^spell (%d+)$",function(n) return "Zauber "..n end},
+ {"^(%d+) reminders skipped this visit%.$",function(n) return n.." Hinweise bei diesem Besuch übersprungen." end},
  {"^Quest (%d+)$",function(n) return "Quest "..n end},
  {"^Spell (%d+)$",function(n) return "Zauber "..n end},
  {"^Trainer (%d+)$",function(n) return "Lehrer "..n end},
@@ -268,14 +278,16 @@ local patterns={
  {"^(.+) %(short on gold%)$",function(t) return t.." (nicht genug Gold)" end},
  {"^(.+) %(zone matched from route text%)$",function(t) return A.Translate(t).." (Ort aus dem Hinweistext)" end},
  {"^Entering (.+)$",function(t) return "Ankunft: "..t end},
- {"^Grey prerequisite — leads to level (%d+) (.+)$",function(n,t) return "Graue Vorquest – führt zu Stufe "..n..": "..t end},
- {"^Grey prerequisite — unlocks (.-) via (.+)$",function(t,c) return "Graue Vorquest – schaltet "..t.." über "..c.." frei" end},
- {"^Grey prerequisite — key/access reward: (.+)$",function(t) return "Graue Vorquest – Schlüssel/Zugang als Belohnung: "..t end},
- {"^Grey prerequisite — raid/access chain: (.+)$",function(t) return "Graue Vorquest – Schlachtzug/Zugang: "..t end},
- {"^Grey prerequisite — utility reward chain: (.+)$",function(t) return "Graue Vorquest – wichtige Freischaltung: "..t end},
+ {"^Grey prerequisite — leads to level (%d+) (.+)$",function(n,t) return "Graue Vorquest – führt zu Stufe "..n..": "..A.Translate(t) end},
+ {"^Grey prerequisite — unlocks (.-) via (.+)$",function(t,c) return "Graue Vorquest – schaltet "..A.Translate(t).." über "..A.Translate(c).." frei" end},
+ {"^Grey prerequisite — key/access reward: (.+)$",function(t) return "Graue Vorquest – Schlüssel/Zugang als Belohnung: "..A.Translate(t) end},
+ {"^Grey prerequisite — raid/access chain: (.+)$",function(t) return "Graue Vorquest – Schlachtzug/Zugang: "..A.Translate(t) end},
+ {"^Grey prerequisite — utility reward chain: (.+)$",function(t) return "Graue Vorquest – wichtige Freischaltung: "..A.Translate(t) end},
  {"^(.+): (%d+) in bags%. Change target, then Save%.$",function(t,n) return t.." · "..n.." im Inventar. Sollbestand ändern und speichern." end},
  {"^(Target) (.+)$",function(_,t) return "Sollbestand "..t end},
- {"^Automatic popups: (.+)$",function(t) return "Automatische Hinweise: "..t end},
+ {"^Version (.-); map (.+)$",function(v,m) return "Version "..v.."; Karte "..m end},
+ {"^Compatibility issue %[(.-)%]: (.+)$",function(k,v) return "Kompatibilitätsproblem ["..k.."]: "..v end},
+ {"^Automatic popups: (.+)$",function(t) return "Automatische Hinweise: "..(t=="true" and "ein" or (t=="false" and "aus" or t)) end},
 }
 function A.Translate(text)
     if not A.IsGerman() or type(text)~="string" then return text end

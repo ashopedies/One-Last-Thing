@@ -74,7 +74,7 @@ local function finished(p)
     if p.firstAidManuals and A.FirstAidManualsMissing and #A.FirstAidManualsMissing()==0 then return true end
     if p.criticalBook and p.buyItem and A.CriticalBookOwned and A.CriticalBookOwned(p.buyItem) then return true end
     if p.buyItem and A.ItemCount(p.buyItem)>=(p.buyTarget or 1) then return true end
-    if p.flightID and A.db.flightKnown[p.flightID] then return true end
+    if p.flightID and ((A.obsoleteFlightNodes and A.obsoleteFlightNodes[p.flightID]) or A.db.flightKnown[p.flightID]) then return true end
     if p.professionID and p.capMax then
         local api=SkillUpForever and SkillUpForever.API
         for _,profession in ipairs((api and A.Safe('pinned profession cap',api.Professions)) or {}) do

@@ -37,6 +37,11 @@ function A.LayoutBottomBar()
     local f=A.frame
     if not (f and f.checkButton and f.settingsButton) or A.db.collapsed then return end
     local available=math.max(180,f:GetWidth()-46)
+    local skipped=A.SkippedCount()
+    local function restoreText(base)
+        local text=A.Translate(base)
+        return skipped>0 and (text..' ('..skipped..')') or text
+    end
     local tiers={
         {'Show hidden reminders','Check','Settings'},
         {'Show skipped','Check','Settings'},
@@ -45,7 +50,7 @@ function A.LayoutBottomBar()
     local buttons={f.restoreButton,f.checkButton,f.settingsButton,f.smaller,f.larger}
     local widths,heights,labels
     for _,tier in ipairs(tiers) do
-        widths={};heights={};labels={tier[1],tier[2],tier[3],'-','+'}
+        widths={};heights={};labels={restoreText(tier[1]),tier[2],tier[3],'-','+'}
         local total=20;local widest=0
         for i,b in ipairs(buttons) do
             A.SetText(b,labels[i]);local fs=b:GetFontString()
@@ -206,7 +211,7 @@ local function make()
     f.grip:SetScript('OnMouseUp',function() f:StopMovingOrSizing();A.db.size={width=f:GetWidth(),height=f:GetHeight()};savePosition(f) end)
     hint(f.grip,'Drag to resize the window.')
     hint(check,'Refresh the checklist for your current location. Does not restore hidden reminders, purchase items or learn spells.')
-    hint(restore,'Show reminders skipped this visit. Ignored reminders and disabled categories stay hidden.')
+    hint(restore,function() return A.Translate(A.SkippedSummary())..'\n'..A.Translate('Show reminders skipped this visit. Ignored reminders and disabled categories stay hidden.') end)
     f:SetScript('OnHide',function()
         A.pendingDraw=nil;f.fadeElapsed=nil;f.header:SetScript('OnUpdate',nil)
         f.idleWaiting=false;f.idleSerial=(f.idleSerial or 0)+1
@@ -429,6 +434,10 @@ function A.Draw(rows,reason,force)
     local map=A.Map()
     local filterOpen=A.filterMenu and A.filterMenu:IsShown()
     local newlyEmpty=#rows==0 and (f.previousCount==nil or f.previousCount>0 or f.previousMap~=map)
+    if #rows>0 then f.collapseAfterFilters=nil end
+    if newlyEmpty and filterOpen and (f.previousCount or 0)>0 and not A.filterMenu.filtersChanged then
+        f.collapseAfterFilters=true
+    end
     if newlyEmpty and not filterOpen then
         if not (A.db.collapsed and A.db.collapseMode=='manual') then
             A.db.collapsed=true;A.db.collapseMode='auto'

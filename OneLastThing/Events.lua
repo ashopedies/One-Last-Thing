@@ -1,7 +1,7 @@
 local _, A = ...
 local events=CreateFrame('Frame');A.eventFrame=events
 local queued=false
-local merchantDirty,trainerDirty,settingsDirty
+local merchantDirty,trainerDirty,settingsDirty,flightDirty
 local ready=false
 local function schedule(reason,show)
     if show or not A.scheduledShow then A.scheduledReason=reason end
@@ -15,6 +15,11 @@ local function schedule(reason,show)
             A.Safe('observe merchant',A.ObserveMerchant);A.Safe('observe repair vendor',A.ObserveRepairMerchant);A.Safe('important vendor offers',A.ObserveImportantMerchant)
         end
         if trainerDirty then trainerDirty=nil;A.Safe('observe trainer',A.ObserveTrainer) end
+        if flightDirty then
+            flightDirty=nil
+            A.Safe('confirm known flights',A.ObserveFlights)
+            A.InvalidateProviders({'FlightRows'})
+        end
         if settingsDirty then
             settingsDirty=nil
             if A.settings and A.settings:IsShown() then A.Safe('item settings',A.BuildSettings) end
@@ -89,7 +94,7 @@ events:SetScript('OnEvent',function(_,event,...)
             if ready and A.frame and A.frame:IsShown() and not menuOpen and (not A.db.collapsed or A.refreshTick%4==0) then schedule('Updated',false) end
         end) end
     elseif event=='PLAYER_LEAVING_WORLD' then
-        A.loadingWorld=true;A.manualInstance=nil;pendingLocation=nil;currentLocation=nil;currentMap=nil;A.capitalArrivalMap=nil
+        A.loadingWorld=true;A.manualInstance=nil;flightDirty=nil;pendingLocation=nil;currentLocation=nil;currentMap=nil;A.capitalArrivalMap=nil
         A.ClearLocation()
     elseif event=='ZONE_CHANGED_NEW_AREA' or event=='ZONE_CHANGED' or event=='ZONE_CHANGED_INDOORS' or event=='PLAYER_ENTERING_WORLD' or event=='PLAYER_CONTROL_GAINED' then
         A.loadingWorld=nil;A.manualInstance=nil;A.ClearLocation(true)
@@ -97,8 +102,11 @@ events:SetScript('OnEvent',function(_,event,...)
     elseif event=='PLAYER_REGEN_ENABLED' then
         if A.pending then local p=A.pending;A.pending=nil;if p.manual then A.Safe('manual refresh',A.Refresh,p.reason,p.show,true) else schedule(p.reason,p.show) end end
     elseif event=='TAXIMAP_OPENED' or event=='BANKFRAME_OPENED' then
-        if event=='TAXIMAP_OPENED' then A.Safe('observe known flights',A.ObserveFlights) end
+        if event=='TAXIMAP_OPENED' then A.Safe('observe known flights',A.ObserveFlights);flightDirty=true end
         schedule(event=='TAXIMAP_OPENED' and 'Before travel' or 'Bank',true)
+    elseif event=='TAXIMAP_CLOSED' then
+        if flightDirty then flightDirty=nil;A.Safe('confirm closing flight map',A.ObserveFlights) end
+        schedule('Updated',false)
     elseif event=='MERCHANT_SHOW' or event=='MERCHANT_UPDATE' then
         merchantDirty=true;schedule('Merchant',event=='MERCHANT_SHOW')
     elseif event=='MERCHANT_CLOSED' then
@@ -125,7 +133,7 @@ events:SetScript('OnEvent',function(_,event,...)
         schedule('Updated',false)
     else schedule('Updated',false) end
 end)
-for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LEAVING_WORLD','ZONE_CHANGED_NEW_AREA','ZONE_CHANGED','ZONE_CHANGED_INDOORS','PLAYER_REGEN_ENABLED','PLAYER_CONTROL_GAINED','TAXIMAP_OPENED','BANKFRAME_OPENED','MERCHANT_SHOW','MERCHANT_UPDATE','MERCHANT_CLOSED','TRAINER_SHOW','TRAINER_UPDATE','TRAINER_CLOSED','UNIT_PET','PET_UI_UPDATE','PET_BAR_UPDATE','UNIT_SPELLCAST_SENT','QUEST_LOG_UPDATE','QUEST_TURNED_IN','BAG_UPDATE_DELAYED','SKILL_LINES_CHANGED','PLAYER_LEVEL_UP','SPELLS_CHANGED','PLAYER_MONEY','UPDATE_INVENTORY_DURABILITY','PLAYER_EQUIPMENT_CHANGED','GET_ITEM_INFO_RECEIVED','ITEM_DATA_LOAD_RESULT','QUEST_DATA_LOAD_RESULT'}) do
+for _,event in ipairs({'ADDON_LOADED','PLAYER_LOGIN','PLAYER_ENTERING_WORLD','PLAYER_LEAVING_WORLD','ZONE_CHANGED_NEW_AREA','ZONE_CHANGED','ZONE_CHANGED_INDOORS','PLAYER_REGEN_ENABLED','PLAYER_CONTROL_GAINED','TAXIMAP_OPENED','TAXIMAP_CLOSED','BANKFRAME_OPENED','MERCHANT_SHOW','MERCHANT_UPDATE','MERCHANT_CLOSED','TRAINER_SHOW','TRAINER_UPDATE','TRAINER_CLOSED','UNIT_PET','PET_UI_UPDATE','PET_BAR_UPDATE','UNIT_SPELLCAST_SENT','QUEST_LOG_UPDATE','QUEST_TURNED_IN','BAG_UPDATE_DELAYED','SKILL_LINES_CHANGED','PLAYER_LEVEL_UP','SPELLS_CHANGED','PLAYER_MONEY','UPDATE_INVENTORY_DURABILITY','PLAYER_EQUIPMENT_CHANGED','GET_ITEM_INFO_RECEIVED','ITEM_DATA_LOAD_RESULT','QUEST_DATA_LOAD_RESULT'}) do
     A.Safe('event '..event,events.RegisterEvent,events,event)
 end
 SLASH_ONELASTTHING1='/olt'

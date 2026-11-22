@@ -20,7 +20,7 @@ function A.InvalidateForEvent(event)
       QUEST_DATA_LOAD_RESULT={'AttuneRows','TurnInRows','DungeonJournalRows'},
       SPELLS_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows','DungeonJournalRows'},
       SKILL_LINES_CHANGED={'AttuneRows','ClassSpellRows','WeaponRows','DungeonJournalRows'},
-      TAXIMAP_OPENED={'FlightRows'},
+      TAXIMAP_OPENED={'FlightRows'},TAXIMAP_CLOSED={'FlightRows'},
       UPDATE_INVENTORY_DURABILITY={},MERCHANT_UPDATE={},MERCHANT_SHOW={},MERCHANT_CLOSED={},
       TRAINER_UPDATE={'ClassSpellRows','WeaponRows'},TRAINER_SHOW={'ClassSpellRows','WeaponRows'},
       GET_ITEM_INFO_RECEIVED={'AttuneRows','DungeonJournalRows'},ITEM_DATA_LOAD_RESULT={'AttuneRows','DungeonJournalRows'},

@@ -1613,9 +1613,9 @@ local count=#frames
 for i=1,10 do OneLastThing.UpdateFilters() end
 assert(#frames==count,'Filter menu did not reuse UI objects')
 assert(OneLastThing.db.filterExpanded.professions==true)
--- Closing an empty filter restores normal auto-collapse; closing with work leaves it open.
+-- Closing after hiding categories only closes the menu, even when no rows remain.
 find('supplies','17030').check.scripts.OnClick();assert(f.rowCount==0)
-OneLastThing.CloseFilters();assert(not m:IsShown() and OneLastThing.db.collapsed)
+OneLastThing.CloseFilters();assert(not m:IsShown() and not OneLastThing.db.collapsed)
 OneLastThing.SetCollapsed(false,'manual');OneLastThing.ShowFilters(f.filterButton)
 find('supplies','17030').check.scripts.OnClick();OneLastThing.CloseFilters()
 assert(not OneLastThing.db.collapsed and f.rowCount==1)
@@ -2090,3 +2090,12 @@ run_review_fixes()
 
 from test_explanations import run as run_explanations
 run_explanations()
+
+from test_filter_toggle import run as run_filter_toggle
+run_filter_toggle()
+
+from test_flight_cleanup import run as run_flight_cleanup
+run_flight_cleanup()
+
+from test_settings_polish import run as run_settings_polish
+run_settings_polish()
